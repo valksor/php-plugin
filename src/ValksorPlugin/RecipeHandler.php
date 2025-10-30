@@ -98,6 +98,43 @@ final class RecipeHandler
     }
 
     /**
+     * Uninstalls a local recipe for a package.
+     *
+     * @throws JsonException
+     */
+    public function uninstallPackage(
+        PackageInterface $package,
+    ): ?Recipe {
+        $packageName = $package->getName();
+
+        if (!$this->isPackageAllowed($packageName)) {
+            return null;
+        }
+
+        $localRecipe = $this->getLocalRecipe($package, 'uninstall');
+
+        if (!$localRecipe) {
+            return null;
+        }
+
+        $this->io->writeError(sprintf('  - Removing local recipe for <info>%s</info>', $packageName));
+
+        $this->initializeFlexObjects();
+
+        // Remove from symfony.lock BEFORE unconfiguring (like Symfony Flex does)
+        // This is important for Options::getRemovableFiles() to work correctly
+        $this->lock->remove($packageName);
+
+        // Unconfigure the recipe (removes env vars, files, etc.)
+        $this->configurator->unconfigure($localRecipe, $this->lock);
+
+        // Write changes
+        $this->lock->write();
+
+        return $localRecipe;
+    }
+
+    /**
      * @throws JsonException
      */
     private function getLocalRecipe(
@@ -209,7 +246,10 @@ final class RecipeHandler
                 continue;
             }
             $relativePath = str_replace($recipePath . '/', '', $realPath);
-            $files[$relativePath] = file_get_contents($realPath);
+            $files[$relativePath] = [
+                'contents' => file_get_contents($realPath),
+                'executable' => is_executable($realPath),
+            ];
         }
 
         return $files;

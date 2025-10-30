@@ -14,6 +14,7 @@ namespace ValksorPlugin\Command;
 
 use Composer\Command\BaseCommand;
 use JsonException;
+use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
 use ValksorPlugin\RecipeHandler;
@@ -26,7 +27,8 @@ class ValksorRecipesInstallCommand extends BaseCommand
     {
         $this
             ->setName('valksor:install')
-            ->setDescription('Applies local recipes from package directories for all installed packages.');
+            ->setDescription('Applies local recipes from package directories for all or a specific installed package.')
+            ->addArgument('package', InputArgument::OPTIONAL, 'Package name to install (e.g., ozo2003/test-composer-package). If not specified, all packages will be processed.');
     }
 
     /**
@@ -40,7 +42,7 @@ class ValksorRecipesInstallCommand extends BaseCommand
         $io = $this->getIO();
         $handler = new RecipeHandler($composer, $io);
 
-        $io->writeError('<info>Searching for local recipes to apply...</info>');
+        $packageName = $input->getArgument('package');
         $locker = $composer->getLocker();
 
         if (!$locker->isLocked()) {
@@ -51,6 +53,38 @@ class ValksorRecipesInstallCommand extends BaseCommand
 
         $packages = $locker->getLockedRepository()->getPackages();
 
+        // If a specific package is requested
+        if ($packageName) {
+            $io->writeError(sprintf('<info>Searching for local recipe to apply for %s...</info>', $packageName));
+            $found = false;
+
+            foreach ($packages as $package) {
+                if ($package->getName() === $packageName) {
+                    $found = true;
+
+                    if ($handler->processPackage($package, 'update')) {
+                        $io->writeError(sprintf('<info>Successfully applied local recipe for %s.</info>', $packageName));
+
+                        return 0;
+                    }
+
+                    $io->writeError(sprintf('<comment>No local recipe found for %s.</comment>', $packageName));
+
+                    return 1;
+                }
+            }
+
+            if (!$found) {
+                $io->writeError(sprintf('<error>Package %s is not installed.</error>', $packageName));
+
+                return 1;
+            }
+
+            return 0;
+        }
+
+        // No specific package - process all packages (original behavior)
+        $io->writeError('<info>Searching for local recipes to apply...</info>');
         $processedCount = 0;
 
         foreach ($packages as $package) {

@@ -21,10 +21,12 @@ use Composer\Plugin\Capable;
 use Composer\Plugin\PluginInterface;
 use JsonException;
 use ValksorPlugin\Command\ValksorRecipesInstallCommand;
+use ValksorPlugin\Command\ValksorRecipesUninstallCommand;
 
 class ValksorFlex implements PluginInterface, EventSubscriberInterface, CommandProvider, Capable
 {
     private ?RecipeHandler $handler = null;
+    private array $processedPackages = [];
 
     /**
      * This method is called by Composer when the plugin is activated.
@@ -53,7 +55,10 @@ class ValksorFlex implements PluginInterface, EventSubscriberInterface, CommandP
 
     public function getCommands(): array
     {
-        return [new ValksorRecipesInstallCommand()];
+        return [
+            new ValksorRecipesInstallCommand(),
+            new ValksorRecipesUninstallCommand(),
+        ];
     }
 
     /**
@@ -62,8 +67,17 @@ class ValksorFlex implements PluginInterface, EventSubscriberInterface, CommandP
     public function onPostPackageInstall(
         PackageEvent $event,
     ): void {
+        $package = $event->getOperation()->getPackage();
+        $packageName = $package->getName();
+
+        // Skip if already processed (handles dev-master/9999999-dev alias duplicates)
+        if (isset($this->processedPackages[$packageName])) {
+            return;
+        }
+
+        $this->processedPackages[$packageName] = true;
         $this->getHandler($event->getComposer(), $event->getIO())
-            ->processPackage($event->getOperation()->getPackage(), 'install');
+            ->processPackage($package, 'install');
     }
 
     /**
@@ -72,8 +86,36 @@ class ValksorFlex implements PluginInterface, EventSubscriberInterface, CommandP
     public function onPostPackageUpdate(
         PackageEvent $event,
     ): void {
+        $package = $event->getOperation()->getTargetPackage();
+        $packageName = $package->getName();
+
+        // Skip if already processed (handles dev-master/9999999-dev alias duplicates)
+        if (isset($this->processedPackages[$packageName])) {
+            return;
+        }
+
+        $this->processedPackages[$packageName] = true;
         $this->getHandler($event->getComposer(), $event->getIO())
-            ->processPackage($event->getOperation()->getTargetPackage(), 'update');
+            ->processPackage($package, 'update');
+    }
+
+    /**
+     * @throws JsonException
+     */
+    public function onPrePackageUninstall(
+        PackageEvent $event,
+    ): void {
+        $package = $event->getOperation()->getPackage();
+        $packageName = $package->getName();
+
+        // Skip if already processed (handles dev-master/9999999-dev alias duplicates)
+        if (isset($this->processedPackages[$packageName])) {
+            return;
+        }
+
+        $this->processedPackages[$packageName] = true;
+        $this->getHandler($event->getComposer(), $event->getIO())
+            ->uninstallPackage($package);
     }
 
     public function uninstall(
@@ -87,6 +129,7 @@ class ValksorFlex implements PluginInterface, EventSubscriberInterface, CommandP
         return [
             'post-package-install' => 'onPostPackageInstall',
             'post-package-update' => 'onPostPackageUpdate',
+            'pre-package-uninstall' => 'onPrePackageUninstall',
         ];
     }
 

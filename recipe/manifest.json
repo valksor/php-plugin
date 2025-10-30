@@ -1,0 +1,5 @@
+{
+    "env": {
+        "DATABASE_URL_X": "postgresql://app:!ChangeMe!@127.0.0.1:5432/app?serverVersion=16&charset=utf8"
+    }
+}

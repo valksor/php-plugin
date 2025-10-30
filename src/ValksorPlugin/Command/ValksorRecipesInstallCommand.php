@@ -56,7 +56,6 @@ class ValksorRecipesInstallCommand extends BaseCommand
         // If a specific package is requested
         if ($packageName) {
             $io->writeError(sprintf('<info>Searching for local recipe to apply for %s...</info>', $packageName));
-            $found = false;
 
             foreach ($packages as $package) {
                 if ($package->getName() === $packageName) {
@@ -72,13 +71,9 @@ class ValksorRecipesInstallCommand extends BaseCommand
                 }
             }
 
-            if (!$found) {
-                $io->writeError(sprintf('<error>Package %s is not installed.</error>', $packageName));
+            $io->writeError(sprintf('<error>Package %s is not installed.</error>', $packageName));
 
-                return 1;
-            }
-
-            return 0;
+            return 1;
         }
 
         // No specific package - process all packages (original behavior)

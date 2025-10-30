@@ -12,6 +12,7 @@
 
 namespace ValksorPlugin;
 
+use Composer\Command\BaseCommand;
 use Composer\Composer;
 use Composer\EventDispatcher\EventSubscriberInterface;
 use Composer\Installer\PackageEvent;

@@ -57,7 +57,7 @@ jobs:
                     fi
 
             -   name: Run tests with PHPUnit
-                run: vendor/bin/phpunit --coverage-cobertura=coverage.xml
+                run: vendor/bin/phpunit --random-order --coverage-cobertura=coverage.xml
 
             -   name: Upload coverage to Qlty
                 uses: qltysh/qlty-action/coverage@v2

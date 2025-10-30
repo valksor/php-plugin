@@ -7,20 +7,15 @@
     "require": {
         "php": ">=8.4",
         "composer-plugin-api": "^2",
-        "composer/composer": "^2",
         "symfony/console": "*",
         "symfony/flex": "*"
     },
     "require-dev": {
+        "composer/composer": "^2",
         "mockery/mockery": "^2.0",
         "phpunit/phpunit": "^12.0",
         "roave/security-advisories": "dev-latest",
         "symfony/filesystem": "^7.4"
-    },
-    "conflict": {
-        "doctrine/dbal": "<4.0",
-        "friendsofphp/php-cs-fixer": "<3.81.0",
-        "symfony/framework-bundle": "<7.4.0"
     },
     "minimum-stability": "dev",
     "prefer-stable": false,

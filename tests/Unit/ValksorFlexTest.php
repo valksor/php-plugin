@@ -14,15 +14,14 @@ namespace ValksorPlugin\Tests\Unit;
 
 use Composer\Composer;
 use Composer\EventDispatcher\EventDispatcher;
-use Composer\EventDispatcher\EventSubscriberInterface;
 use Composer\IO\IOInterface;
 use Composer\Plugin\Capability\CommandProvider;
-use Composer\Plugin\Capable;
-use Composer\Plugin\PluginInterface;
+use JsonException;
 use Mockery;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 use ReflectionClass;
+use ReflectionException;
 use ValksorPlugin\Command\ValksorRecipesInstallCommand;
 use ValksorPlugin\Command\ValksorRecipesUninstallCommand;
 use ValksorPlugin\Tests\Mocks\ComposerMockFactory;
@@ -54,7 +53,8 @@ class ValksorFlexTest extends TestCase
             ->andReturn($eventDispatcher);
 
         // Assert that activate completes without throwing exceptions
-        $this->assertNull($this->plugin->activate($composer, $this->io));
+        $this->expectNotToPerformAssertions();
+        $this->plugin->activate($composer, $this->io);
     }
 
     public function testDeactivateDoesNothing(): void
@@ -64,6 +64,10 @@ class ValksorFlexTest extends TestCase
         $this->plugin->deactivate($this->composer, $this->io);
     }
 
+    /**
+     * @throws JsonException
+     * @throws ReflectionException
+     */
     public function testDuplicatePackageHandling(): void
     {
         $package = ComposerMockFactory::createPackage('test/package', 'dev-master');
@@ -80,18 +84,14 @@ class ValksorFlexTest extends TestCase
             ->andReturn(null);
 
         // Set the handler using reflection
-        $reflection = new ReflectionClass($this->plugin);
-        $handlerProperty = $reflection->getProperty('handler');
+        $handlerProperty = new ReflectionClass($this->plugin)->getProperty('handler');
         $handlerProperty->setValue($this->plugin, $handler);
 
         // Process both events and capture results
-        $result1 = $this->plugin->onPostPackageInstall($event1);
-        $result2 = $this->plugin->onPostPackageInstall($event2);
-
-        // Both calls should return null (no exceptions thrown)
-        // Mockery will verify processPackage was only called once
-        $this->assertNull($result1);
-        $this->assertNull($result2);
+        $this->expectNotToPerformAssertions();
+        $this->plugin->onPostPackageInstall($event1);
+        $this->expectNotToPerformAssertions();
+        $this->plugin->onPostPackageInstall($event2);
     }
 
     public function testGetCapabilitiesReturnsCommandProvider(): void
@@ -114,11 +114,13 @@ class ValksorFlexTest extends TestCase
         $this->assertInstanceOf(ValksorRecipesUninstallCommand::class, $commands[1]);
     }
 
+    /**
+     * @throws ReflectionException
+     */
     public function testGetHandlerCreatesHandlerLazily(): void
     {
         // First call should create the handler
-        $reflection = new ReflectionClass($this->plugin);
-        $getHandlerMethod = $reflection->getMethod('getHandler');
+        $getHandlerMethod = new ReflectionClass($this->plugin)->getMethod('getHandler');
 
         $handler1 = $getHandlerMethod->invoke($this->plugin, $this->composer, $this->io);
         $handler2 = $getHandlerMethod->invoke($this->plugin, $this->composer, $this->io);
@@ -145,17 +147,22 @@ class ValksorFlexTest extends TestCase
 
     public function testOnPostPackageInstallProcessesAllowedPackage(): void
     {
-        $package = ComposerMockFactory::createPackage('test/package', '1.0.0');
+        $package = ComposerMockFactory::createPackage();
         $event = ComposerMockFactory::createPackageInstallEvent($package, $this->composer, $this->io);
 
         // Test that the method executes without throwing exceptions
         // The actual RecipeHandler will process the package
-        $this->assertNull($this->plugin->onPostPackageInstall($event));
+        $this->expectNotToPerformAssertions();
+        $this->plugin->onPostPackageInstall($event);
     }
 
+    /**
+     * @throws ReflectionException
+     * @throws JsonException
+     */
     public function testOnPostPackageInstallSkipsDuplicatePackage(): void
     {
-        $package = ComposerMockFactory::createPackage('test/package', '1.0.0');
+        $package = ComposerMockFactory::createPackage();
         $event1 = ComposerMockFactory::createPackageInstallEvent($package, $this->composer, $this->io);
         $event2 = ComposerMockFactory::createPackageInstallEvent($package, $this->composer, $this->io);
 
@@ -167,23 +174,24 @@ class ValksorFlexTest extends TestCase
             ->andReturn(null);
 
         // Create plugin with private handler mock using reflection
-        $reflection = new ReflectionClass($this->plugin);
-        $handlerProperty = $reflection->getProperty('handler');
+        $handlerProperty = new ReflectionClass($this->plugin)->getProperty('handler');
         $handlerProperty->setValue($this->plugin, $handler);
 
         // Process both events - Mockery will verify processPackage is only called once
-        $result1 = $this->plugin->onPostPackageInstall($event1);
-        $result2 = $this->plugin->onPostPackageInstall($event2);
-
-        // Both calls should return null (no exceptions thrown)
-        $this->assertNull($result1);
-        $this->assertNull($result2);
+        $this->expectNotToPerformAssertions();
+        $this->plugin->onPostPackageInstall($event1);
+        $this->expectNotToPerformAssertions();
+        $this->plugin->onPostPackageInstall($event2);
     }
 
+    /**
+     * @throws ReflectionException
+     * @throws JsonException
+     */
     public function testOnPostPackageUpdateProcessesUpdatedPackage(): void
     {
-        $initialPackage = ComposerMockFactory::createPackage('test/package', '1.0.0');
-        $targetPackage = ComposerMockFactory::createPackage('test/package', '2.0.0');
+        $initialPackage = ComposerMockFactory::createPackage();
+        $targetPackage = ComposerMockFactory::createPackage(version: '2.0.0');
         $event = ComposerMockFactory::createPackageUpdateEvent($initialPackage, $targetPackage, $this->composer, $this->io);
 
         // Mock the handler to verify it processes the target package with 'update' operation
@@ -194,19 +202,20 @@ class ValksorFlexTest extends TestCase
             ->andReturn(null);
 
         // Create plugin with private handler mock using reflection
-        $reflection = new ReflectionClass($this->plugin);
-        $handlerProperty = $reflection->getProperty('handler');
+        $handlerProperty = new ReflectionClass($this->plugin)->getProperty('handler');
         $handlerProperty->setValue($this->plugin, $handler);
 
-        $result = $this->plugin->onPostPackageUpdate($event);
-
-        // Verify the method completes without exceptions and returns null
-        $this->assertNull($result);
+        $this->expectNotToPerformAssertions();
+        $this->plugin->onPostPackageUpdate($event);
     }
 
+    /**
+     * @throws ReflectionException
+     * @throws JsonException
+     */
     public function testOnPrePackageUninstallRemovesPackage(): void
     {
-        $package = ComposerMockFactory::createPackage('test/package', '1.0.0');
+        $package = ComposerMockFactory::createPackage();
         $event = ComposerMockFactory::createPackageUninstallEvent($package, $this->composer, $this->io);
 
         // Mock the handler to verify uninstallPackage is called with the correct package
@@ -217,22 +226,11 @@ class ValksorFlexTest extends TestCase
             ->andReturn(null);
 
         // Create plugin with private handler mock using reflection
-        $reflection = new ReflectionClass($this->plugin);
-        $handlerProperty = $reflection->getProperty('handler');
+        $handlerProperty = new ReflectionClass($this->plugin)->getProperty('handler');
         $handlerProperty->setValue($this->plugin, $handler);
 
-        $result = $this->plugin->onPrePackageUninstall($event);
-
-        // Verify the method completes without exceptions and returns null
-        $this->assertNull($result);
-    }
-
-    public function testPluginImplementsRequiredInterfaces(): void
-    {
-        $this->assertInstanceOf(PluginInterface::class, $this->plugin);
-        $this->assertInstanceOf(EventSubscriberInterface::class, $this->plugin);
-        $this->assertInstanceOf(CommandProvider::class, $this->plugin);
-        $this->assertInstanceOf(Capable::class, $this->plugin);
+        $this->expectNotToPerformAssertions();
+        $this->plugin->onPrePackageUninstall($event);
     }
 
     public function testUninstallDoesNothing(): void

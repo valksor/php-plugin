@@ -22,7 +22,6 @@ use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 use ReflectionClass;
 use ReflectionException;
-use Symfony\Flex\Recipe;
 use ValksorPlugin\RecipeHandler;
 use ValksorPlugin\Tests\Mocks\ComposerMockFactory;
 
@@ -119,6 +118,9 @@ class RecipeHandlerTest extends TestCase
         $this->assertNull($recipe);
     }
 
+    /**
+     * @throws ReflectionException
+     */
     public function testGetPackageConfigForUnknownPackage(): void
     {
         $reflection = new ReflectionClass($this->handler);
@@ -376,11 +378,8 @@ class RecipeHandlerTest extends TestCase
 
         $composerWithWildcard->shouldReceive('getInstallationManager')->andReturn($installManager);
 
-        $result = $handler->processPackage($package, 'install');
-
-        // The result should be null if no recipe is found or processed
-        // But the important thing is that it doesn't throw exceptions
-        $this->assertTrue(true); // Test passes if we get here without exceptions
+        $this->expectNotToPerformAssertions();
+        $handler->processPackage($package, 'install');
     }
 
     /**
@@ -564,11 +563,8 @@ class RecipeHandlerTest extends TestCase
 
         $composerWithWildcard->shouldReceive('getInstallationManager')->andReturn($installManager);
 
-        $result = $handler->uninstallPackage($package);
-
-        // The result should be null if no recipe is found or processed
-        // But the important thing is that it doesn't throw exceptions
-        $this->assertTrue(true); // Test passes if we get here without exceptions
+        $this->expectNotToPerformAssertions();
+        $handler->uninstallPackage($package);
     }
 
     /**

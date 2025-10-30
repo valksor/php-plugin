@@ -53,13 +53,8 @@ class ValksorRecipesUninstallCommand extends BaseCommand
             return 1;
         }
 
-        $packages = $locker->getLockedRepository()->getPackages();
-        $found = false;
-
-        foreach ($packages as $package) {
+        foreach ($locker->getLockedRepository()->getPackages() as $package) {
             if ($package->getName() === $packageName) {
-                $found = true;
-
                 if ($handler->uninstallPackage($package)) {
                     $io->writeError(sprintf('<info>Successfully removed local recipe for %s.</info>', $packageName));
 
@@ -72,12 +67,8 @@ class ValksorRecipesUninstallCommand extends BaseCommand
             }
         }
 
-        if (!$found) {
-            $io->writeError(sprintf('<error>Package %s is not installed.</error>', $packageName));
+        $io->writeError(sprintf('<error>Package %s is not installed.</error>', $packageName));
 
-            return 1;
-        }
-
-        return 0;
+        return 1;
     }
 }

@@ -1,0 +1,13 @@
+# Test configuration file
+parameters:
+    app.name: 'Test Application'
+    app.version: '1.0.0'
+
+services:
+    _defaults:
+        autowire: true
+        autoconfigure: true
+
+    App\Service\TestService:
+        arguments:
+            $name: '%app.name%'

@@ -50,7 +50,7 @@ use const JSON_THROW_ON_ERROR;
  * @author Davis Zalitis (k0d3r1s)
  * @author SIA Valksor <packages@valksor.com>
  */
-final class RecipeHandler
+class RecipeHandler
 {
     /** Configuration key in composer.json */
     private const string CONFIG_KEY = 'valksor';

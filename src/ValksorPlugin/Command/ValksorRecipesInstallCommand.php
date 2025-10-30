@@ -21,8 +21,24 @@ use ValksorPlugin\RecipeHandler;
 
 use function sprintf;
 
+/**
+ * Composer command to manually install local recipes.
+ *
+ * This command allows users to manually trigger the installation of local
+ * recipes for all packages or a specific package. It's useful when recipes
+ * weren't applied during automatic composer operations or when re-applying
+ * recipes after configuration changes.
+ */
 class ValksorRecipesInstallCommand extends BaseCommand
 {
+    /**
+     * Configure the command definition.
+     *
+     * Sets up the command name, description, and arguments for the
+     * valksor:install command.
+     *
+     * @return void
+     */
     protected function configure(): void
     {
         $this
@@ -32,7 +48,18 @@ class ValksorRecipesInstallCommand extends BaseCommand
     }
 
     /**
-     * @throws JsonException
+     * Execute the command to install local recipes.
+     *
+     * Processes either all installed packages or a specific package to
+     * discover and apply local recipes. Validates that a lock file exists
+     * and provides appropriate feedback on the operation results.
+     *
+     * @param InputInterface  $input  The command input interface
+     * @param OutputInterface $output The command output interface
+     *
+     * @return int Command exit code (0 for success, 1 for error)
+     *
+     * @throws JsonException When recipe manifest cannot be parsed
      */
     protected function execute(
         InputInterface $input,

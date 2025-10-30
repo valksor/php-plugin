@@ -46,9 +46,6 @@ use const JSON_THROW_ON_ERROR;
  * parsing recipe manifests, and applying configurations using Symfony Flex's
  * configurator system. It manages the complete recipe lifecycle including
  * installation, updates, and uninstallation.
- *
- * @author Davis Zalitis (k0d3r1s)
- * @author SIA Valksor <packages@valksor.com>
  */
 class RecipeHandler
 {
@@ -58,7 +55,7 @@ class RecipeHandler
     /** Directory name within packages that contains recipes */
     private const string RECIPE_DIR = 'recipe';
 
-    /** @var array Plugin configuration from composer.json */
+    /** @var array<string, mixed> Plugin configuration from composer.json */
     private array $config;
 
     /** @var Configurator|null Symfony Flex configurator instance */
@@ -137,7 +134,15 @@ class RecipeHandler
     /**
      * Uninstalls a local recipe for a package.
      *
-     * @throws JsonException
+     * Removes configuration files, environment variables, and other changes
+     * made by a package's local recipe during uninstallation. This method
+     * handles the complete cleanup process including updating the lock file.
+     *
+     * @param PackageInterface $package The package to uninstall the recipe for
+     *
+     * @return Recipe|null The uninstalled recipe, or null if no recipe found/allowed
+     *
+     * @throws JsonException When recipe manifest cannot be parsed
      */
     public function uninstallPackage(
         PackageInterface $package,
@@ -172,7 +177,18 @@ class RecipeHandler
     }
 
     /**
-     * @throws JsonException
+     * Discover and load a local recipe from a package directory.
+     *
+     * Searches for a recipe/manifest.json file within the installed package
+     * directory, parses the manifest, and creates a Recipe object with the
+     * discovered configuration files and metadata.
+     *
+     * @param PackageInterface $package   The package to search for recipes in
+     * @param string           $operation The operation type ('install', 'update', 'uninstall')
+     *
+     * @return Recipe|null The discovered recipe, or null if no recipe found
+     *
+     * @throws JsonException When recipe manifest cannot be parsed
      */
     private function getLocalRecipe(
         PackageInterface $package,
@@ -214,6 +230,17 @@ class RecipeHandler
         );
     }
 
+    /**
+     * Get package-specific configuration from plugin settings.
+     *
+     * Retrieves the configuration for a specific package from the plugin's
+     * allow configuration in composer.json. Returns empty array if no
+     * configuration is found for the package.
+     *
+     * @param string $packageName The name of the package to get configuration for
+     *
+     * @return array<string, mixed> The package configuration, or empty array if none found
+     */
     private function getPackageConfig(
         string $packageName,
     ): array {
@@ -227,6 +254,15 @@ class RecipeHandler
         return is_array($packageConfig) ? $packageConfig : [];
     }
 
+    /**
+     * Initialize Symfony Flex objects (lock and configurator).
+     *
+     * Creates the Symfony Flex Lock and Configurator instances if they
+     * haven't been initialized yet. Uses lazy initialization to avoid
+     * creating these objects until they're actually needed.
+     *
+     * @return void
+     */
     private function initializeFlexObjects(): void
     {
         if ($this->lock) {
@@ -248,6 +284,17 @@ class RecipeHandler
         $this->configurator = new Configurator($this->composer, $this->io, $options);
     }
 
+    /**
+     * Check if a package is allowed to have recipes processed.
+     *
+     * Determines whether a package should be processed based on the plugin's
+     * allow configuration. Supports wildcard ('*') to allow all packages or
+     * a specific list of allowed packages.
+     *
+     * @param string $packageName The name of the package to check
+     *
+     * @return bool True if the package is allowed, false otherwise
+     */
     private function isPackageAllowed(
         string $packageName,
     ): bool {
@@ -264,6 +311,18 @@ class RecipeHandler
         return false;
     }
 
+    /**
+     * Parse all files in a local recipe directory.
+     *
+     * Recursively scans the recipe directory and loads all files except
+     * the manifest.json file. Returns an array mapping relative file paths
+     * to file contents and executable status.
+     *
+     * @param string $recipePath  The absolute path to the recipe directory
+     * @param string $manifestPath The absolute path to the manifest.json file
+     *
+     * @return array<string, array{contents: string|false, executable: bool}> Array of recipe files
+     */
     private function parseLocalRecipeFiles(
         string $recipePath,
         string $manifestPath,

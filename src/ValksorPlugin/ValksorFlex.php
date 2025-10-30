@@ -31,12 +31,10 @@ use ValksorPlugin\Command\ValksorRecipesUninstallCommand;
  * directories when packages are installed, updated, or uninstalled. It provides
  * a recipe system similar to Symfony Flex but focuses on local recipe discovery
  * within package directories.
- *
- * @author Davis Zalitis (k0d3r1s)
- * @author SIA Valksor <packages@valksor.com>
  */
 class ValksorFlex implements PluginInterface, EventSubscriberInterface, CommandProvider, Capable
 {
+    /** @var RecipeHandler|null Recipe handler instance */
     private ?RecipeHandler $handler = null;
 
     /** @var array<string, bool> Track processed packages to avoid duplicates */

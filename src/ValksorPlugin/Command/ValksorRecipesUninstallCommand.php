@@ -21,8 +21,23 @@ use ValksorPlugin\RecipeHandler;
 
 use function sprintf;
 
+/**
+ * Composer command to manually uninstall local recipes.
+ *
+ * This command allows users to manually remove local recipes that were
+ * previously applied to packages. It cleans up configuration files,
+ * environment variables, and other changes made by the recipe.
+ */
 class ValksorRecipesUninstallCommand extends BaseCommand
 {
+    /**
+     * Configure the command definition.
+     *
+     * Sets up the command name, description, and arguments for the
+     * valksor:uninstall command.
+     *
+     * @return void
+     */
     protected function configure(): void
     {
         $this
@@ -32,7 +47,18 @@ class ValksorRecipesUninstallCommand extends BaseCommand
     }
 
     /**
-     * @throws JsonException
+     * Execute the command to uninstall local recipes.
+     *
+     * Removes local recipes for a specific package by cleaning up configuration
+     * files, environment variables, and other changes made during installation.
+     * Validates that a lock file exists and the package is installed.
+     *
+     * @param InputInterface  $input  The command input interface
+     * @param OutputInterface $output The command output interface
+     *
+     * @return int Command exit code (0 for success, 1 for error)
+     *
+     * @throws JsonException When recipe manifest cannot be parsed
      */
     protected function execute(
         InputInterface $input,

@@ -1,0 +1,75 @@
+name: Tests
+
+on:
+    push:
+        branches:
+            - master
+    pull_request:
+
+jobs:
+    tests:
+        name: Tests on PHP ${{ matrix.php-version }}
+        runs-on: ubuntu-latest
+
+        strategy:
+            fail-fast: false
+            matrix:
+                php-version: [ '8.4' ]
+
+        steps:
+            # https://github.com/marketplace/actions/checkout
+            -   name: Checkout code
+                uses: actions/checkout@v4
+                with:
+                    fetch-depth: 0
+
+            # https://github.com/marketplace/actions/setup-php-action
+            -   name: Setup PHP
+                uses: shivammathur/setup-php@v2
+                with:
+                    php-version: ${{ matrix.php-version }}
+                    extensions: mbstring, xml, json, iconv, dom, simplexml, tokenizer
+                    tools: composer:v2
+                    coverage: pcov
+
+            # https://github.com/marketplace/actions/cache
+            -   name: Cache Composer dependencies
+                uses: actions/cache@v4
+                with:
+                    path: ~/.composer/cache
+                    key: ${{ runner.os }}-composer-${{ matrix.php-version }}-${{ hashFiles('**/composer.json') }}
+                    restore-keys: |
+                        ${{ runner.os }}-composer-${{ matrix.php-version }}-${{ runner.os }}-composer-
+
+            -   name: Validate composer.json and composer.lock
+                run: composer validate --strict
+
+            -   name: Install Composer dependencies
+                run: composer install --prefer-dist --no-progress --no-interaction --optimize-autoloader
+
+            -   name: Check for security advisories
+                run: |
+                    if composer audit --no-dev --locked; then
+                      echo "✅ No security vulnerabilities found in production dependencies"
+                    else
+                      echo "❌ Security vulnerabilities found!"
+                      exit 1
+                    fi
+
+            -   name: Run tests with PHPUnit
+                run: vendor/bin/phpunit --coverage-clover=coverage.xml
+
+            -   name: Upload coverage to Qlty
+                uses: qltysh/qlty-action/coverage@v2
+                with:
+                    token: ${{ secrets.QLTY_COVERAGE_TOKEN }}
+                    files: "coverage.xml"
+
+            -   name: Upload coverage reports to GitHub
+                uses: actions/upload-artifact@v4
+                if: always()
+                with:
+                    name: coverage-report-php-${{ matrix.php-version }}
+                    path: |
+                        .coverage/coverage.xml
+                    retention-days: 1

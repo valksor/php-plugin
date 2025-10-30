@@ -73,6 +73,52 @@ class RecipeHandlerTest extends TestCase
         $this->assertEmpty($config);
     }
 
+    /**
+     * Test getLocalRecipe with invalid manifest JSON.
+     *
+     * @throws ReflectionException
+     */
+    public function testGetLocalRecipeWithInvalidManifest(): void
+    {
+        $method = new ReflectionClass($this->handler)->getMethod('getLocalRecipe');
+        $package = ComposerMockFactory::createPackage('test/invalid-json');
+
+        // Mock installation manager to return invalid recipe path
+        $installManager = Mockery::mock(InstallationManager::class);
+        $installManager->shouldReceive('getInstallPath')
+            ->with($package)
+            ->andReturn(__DIR__ . '/../Fixtures/recipes/invalid-recipe');
+
+        $this->composer->shouldReceive('getInstallationManager')->andReturn($installManager);
+
+        $recipe = $method->invoke($this->handler, $package, 'install');
+
+        $this->assertNull($recipe);
+    }
+
+    /**
+     * Test getLocalRecipe with no recipe directory.
+     *
+     * @throws ReflectionException
+     */
+    public function testGetLocalRecipeWithNoRecipeDirectory(): void
+    {
+        $method = new ReflectionClass($this->handler)->getMethod('getLocalRecipe');
+        $package = ComposerMockFactory::createPackage('test/no-recipe');
+
+        // Mock installation manager to return path without recipe
+        $installManager = Mockery::mock(InstallationManager::class);
+        $installManager->shouldReceive('getInstallPath')
+            ->with($package)
+            ->andReturn(sys_get_temp_dir() . '/no-recipe');
+
+        $this->composer->shouldReceive('getInstallationManager')->andReturn($installManager);
+
+        $recipe = $method->invoke($this->handler, $package, 'install');
+
+        $this->assertNull($recipe);
+    }
+
     public function testGetPackageConfigForUnknownPackage(): void
     {
         $reflection = new ReflectionClass($this->handler);
@@ -121,6 +167,82 @@ class RecipeHandlerTest extends TestCase
         $this->assertIsArray($result);
         $this->assertTrue($result['allow_override']);
         $this->assertSame('value', $result['custom_setting']);
+    }
+
+    /**
+     * Test getPackageConfig with non-array package config.
+     *
+     * @throws ReflectionException
+     */
+    public function testGetPackageConfigWithNonArrayConfig(): void
+    {
+        $method = new ReflectionClass($this->handler)->getMethod('getPackageConfig');
+
+        // Set config with non-array package configuration
+        $config = [
+            'allow' => [
+                'test/package' => 'invalid_string_config',
+            ],
+        ];
+
+        $configProperty = new ReflectionClass($this->handler)->getProperty('config');
+        $configProperty->setValue($this->handler, $config);
+
+        $result = $method->invoke($this->handler, 'test/package');
+
+        // Should return empty array for invalid config
+        $this->assertIsArray($result);
+        $this->assertEmpty($result);
+    }
+
+    /**
+     * Test initializeFlexObjects only runs once.
+     *
+     * @throws ReflectionException
+     */
+    public function testInitializeFlexObjectsRunsOnce(): void
+    {
+        $reflection = new ReflectionClass($this->handler);
+        $method = $reflection->getMethod('initializeFlexObjects');
+
+        $method->invoke($this->handler);
+
+        $lock1 = $reflection->getProperty('lock')->getValue($this->handler);
+        $configurator1 = $reflection->getProperty('configurator')->getValue($this->handler);
+
+        // Call again - should not recreate objects
+        $method->invoke($this->handler);
+
+        $lock2 = $reflection->getProperty('lock')->getValue($this->handler);
+        $configurator2 = $reflection->getProperty('configurator')->getValue($this->handler);
+
+        $this->assertSame($lock1, $lock2, 'Lock object should be reused');
+        $this->assertSame($configurator1, $configurator2, 'Configurator object should be reused');
+    }
+
+    /**
+     * Test initializeFlexObjects method creates Flex dependencies.
+     *
+     * @throws ReflectionException
+     */
+    public function testInitializeFlexObjectsViaReflection(): void
+    {
+        $reflection = new ReflectionClass($this->handler);
+        $method = $reflection->getMethod('initializeFlexObjects');
+
+        // Verify objects are null initially
+        $lockProperty = $reflection->getProperty('lock');
+        $configuratorProperty = $reflection->getProperty('configurator');
+
+        $this->assertNull($lockProperty->getValue($this->handler));
+        $this->assertNull($configuratorProperty->getValue($this->handler));
+
+        // Call the method
+        $method->invoke($this->handler);
+
+        // Verify objects are created
+        $this->assertNotNull($lockProperty->getValue($this->handler));
+        $this->assertNotNull($configuratorProperty->getValue($this->handler));
     }
 
     /**
@@ -202,6 +324,36 @@ class RecipeHandlerTest extends TestCase
     }
 
     /**
+     * Test processPackage with JsonException handling.
+     *
+     * @throws JsonException
+     */
+    public function testProcessPackageHandlesJsonException(): void
+    {
+        // Create handler with wildcard allow configuration
+        $composerWithWildcard = ComposerMockFactory::createComposer([
+            'valksor' => [
+                'allow' => '*',
+            ],
+        ]);
+        $handler = new RecipeHandler($composerWithWildcard, $this->io);
+
+        $package = ComposerMockFactory::createPackage('test/json-error');
+
+        // Mock installation manager to return path with invalid JSON
+        $installManager = Mockery::mock(InstallationManager::class);
+        $installManager->shouldReceive('getInstallPath')
+            ->with($package)
+            ->andReturn(__DIR__ . '/../Fixtures/recipes/invalid-recipe');
+
+        $composerWithWildcard->shouldReceive('getInstallationManager')->andReturn($installManager);
+
+        // Should handle JsonException gracefully and return null
+        $result = $handler->processPackage($package, 'install');
+        $this->assertNull($result);
+    }
+
+    /**
      * @throws JsonException
      */
     public function testProcessPackageWithAllowedPackageAndValidRecipe(): void
@@ -250,6 +402,9 @@ class RecipeHandlerTest extends TestCase
         $this->assertNull($result);
     }
 
+    /**
+     * @throws JsonException
+     */
     public function testProcessPackageWithInvalidManifestJson(): void
     {
         $package = ComposerMockFactory::createPackage('test/invalid-recipe');
@@ -267,6 +422,38 @@ class RecipeHandlerTest extends TestCase
         $this->assertNull($result);
     }
 
+    /**
+     * Test processPackage with no installation path.
+     *
+     * @throws JsonException
+     */
+    public function testProcessPackageWithNoInstallationPath(): void
+    {
+        // Create handler with wildcard allow configuration
+        $composerWithWildcard = ComposerMockFactory::createComposer([
+            'valksor' => [
+                'allow' => '*',
+            ],
+        ]);
+        $handler = new RecipeHandler($composerWithWildcard, $this->io);
+
+        $package = ComposerMockFactory::createPackage('test/no-path');
+
+        // Mock installation manager to return null
+        $installManager = Mockery::mock(InstallationManager::class);
+        $installManager->shouldReceive('getInstallPath')
+            ->with($package)
+            ->andReturn(null);
+
+        $composerWithWildcard->shouldReceive('getInstallationManager')->andReturn($installManager);
+
+        $result = $handler->processPackage($package, 'install');
+        $this->assertNull($result);
+    }
+
+    /**
+     * @throws JsonException
+     */
     public function testProcessPackageWithNoRecipeDirectory(): void
     {
         $package = ComposerMockFactory::createPackage('test/no-recipe');
@@ -284,6 +471,9 @@ class RecipeHandlerTest extends TestCase
         $this->assertNull($result);
     }
 
+    /**
+     * @throws JsonException
+     */
     public function testProcessPackageWithWildcardAllow(): void
     {
         $package = ComposerMockFactory::createPackage('any/package');
@@ -331,6 +521,9 @@ class RecipeHandlerTest extends TestCase
         $this->assertNull($result);
     }
 
+    /**
+     * @throws JsonException
+     */
     public function testUninstallPackageWithNoRecipe(): void
     {
         $package = ComposerMockFactory::createPackage('test/no-recipe');

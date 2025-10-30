@@ -483,7 +483,7 @@ ValksorPlugin is built on top of Symfony Flex and:
 
 ## Requirements
 
-- PHP 8.1 or higher
+- PHP 8.4 or higher
 - Composer 2.0 or higher
 - Symfony Flex (as dependency)
 

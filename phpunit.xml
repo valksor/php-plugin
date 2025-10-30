@@ -20,7 +20,7 @@
         </include>
     </source>
 
-    <coverage>
+    <coverage includeUncoveredFiles="true">
         <report>
             <html outputDirectory=".coverage/coverage.html"/>
             <text outputFile=".coverage/coverage.txt"/>

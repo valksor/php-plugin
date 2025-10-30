@@ -71,5 +71,5 @@ jobs:
                 with:
                     name: coverage-report-php-${{ matrix.php-version }}
                     path: |
-                        .coverage/coverage.xml
+                        coverage.xml
                     retention-days: 1

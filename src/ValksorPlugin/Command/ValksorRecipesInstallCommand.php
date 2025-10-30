@@ -60,8 +60,6 @@ class ValksorRecipesInstallCommand extends BaseCommand
 
             foreach ($packages as $package) {
                 if ($package->getName() === $packageName) {
-                    $found = true;
-
                     if ($handler->processPackage($package, 'update')) {
                         $io->writeError(sprintf('<info>Successfully applied local recipe for %s.</info>', $packageName));
 

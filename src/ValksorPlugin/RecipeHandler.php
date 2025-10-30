@@ -39,15 +39,43 @@ use function str_replace;
 use const JSON_ERROR_NONE;
 use const JSON_THROW_ON_ERROR;
 
+/**
+ * Handles discovery and processing of local recipes for packages.
+ *
+ * This class is responsible for finding recipes in package directories,
+ * parsing recipe manifests, and applying configurations using Symfony Flex's
+ * configurator system. It manages the complete recipe lifecycle including
+ * installation, updates, and uninstallation.
+ *
+ * @author Davis Zalitis (k0d3r1s)
+ * @author SIA Valksor <packages@valksor.com>
+ */
 final class RecipeHandler
 {
+    /** Configuration key in composer.json */
     private const string CONFIG_KEY = 'valksor';
+
+    /** Directory name within packages that contains recipes */
     private const string RECIPE_DIR = 'recipe';
 
+    /** @var array Plugin configuration from composer.json */
     private array $config;
+
+    /** @var Configurator|null Symfony Flex configurator instance */
     private ?Configurator $configurator = null;
+
+    /** @var Lock|null Symfony Flex lock file manager */
     private ?Lock $lock = null;
 
+    /**
+     * Create a new RecipeHandler instance.
+     *
+     * Initializes the handler with Composer and IO interfaces, and loads
+     * the plugin configuration from composer.json's extra.valksor section.
+     *
+     * @param Composer    $composer The Composer instance
+     * @param IOInterface $io       The I/O interface for user interaction
+     */
     public function __construct(
         private readonly Composer $composer,
         private readonly IOInterface $io,
@@ -56,9 +84,18 @@ final class RecipeHandler
     }
 
     /**
-     * The main method to process a single package.
+     * Process a package and apply its local recipe if available.
      *
-     * @throws JsonException
+     * This is the main entry point for recipe processing. It checks if the package
+     * is allowed to have recipes, discovers local recipes, and applies them using
+     * Symfony Flex's configurator system.
+     *
+     * @param PackageInterface $package   The package to process
+     * @param string           $operation The operation type ('install', 'update')
+     *
+     * @return Recipe|null The applied recipe, or null if no recipe found/allowed
+     *
+     * @throws JsonException When recipe manifest cannot be parsed
      */
     public function processPackage(
         PackageInterface $package,

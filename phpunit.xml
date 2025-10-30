@@ -20,11 +20,12 @@
         </include>
     </source>
 
-    <coverage includeUncoveredFiles="true">
+    <coverage>
         <report>
-            <html outputDirectory=".coverage/coverage.html"/>
+            <html outputDirectory=".coverage"/>
             <text outputFile=".coverage/coverage.txt"/>
-            <clover outputFile=".coverage/coverage.xml"/>
+            <clover outputFile=".coverage/clover.xml"/>
+            <cobertura outputFile=".coverage/cobertura.xml"/>
         </report>
     </coverage>
 

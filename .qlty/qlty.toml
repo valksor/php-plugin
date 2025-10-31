@@ -1,0 +1,7 @@
+exclude_patterns = [
+    "**/tests/**,
+    "**/vendor/**",
+    "**/.github/**",
+    "**/.claude/**",
+    "**/.junie/**",
+]

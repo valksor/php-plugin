@@ -154,7 +154,16 @@ class ValksorFlex implements PluginInterface, EventSubscriberInterface, CommandP
         $package = $event->getOperation()->getPackage();
         $packageName = $package->getName();
 
-        // Skip if already processed (handles dev-master/9999999-dev alias duplicates)
+        // Skip if already processed (handles Composer package alias duplicates)
+        //
+        // This prevents duplicate processing when Composer creates multiple
+        // package instances for the same package with different versions:
+        // - dev-master and 9999999-dev (common for git packages)
+        // - 1.0.x-dev and 1.0.0-dev (branch aliases)
+        // - Other version alias scenarios
+        //
+        // Without this check, the same recipe would be uninstalled multiple times
+        // for the same logical package, leading to errors and inconsistent state.
         if (isset($this->processedPackages[$packageName])) {
             return;
         }

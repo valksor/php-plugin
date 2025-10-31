@@ -100,6 +100,7 @@ class RecipeHandler
     ): ?Recipe {
         $packageName = $package->getName();
 
+        // Early return guards for invalid conditions
         if (!$this->isPackageAllowed($packageName)) {
             return null;
         }
@@ -111,14 +112,7 @@ class RecipeHandler
         }
 
         $allowOverride = $this->getPackageConfig($packageName)['allow_override'] ?? false;
-
-        if (!$allowOverride) {
-            // For manual install, we can be more aggressive. Let's just apply it.
-            // The user explicitly ran the command.
-            $this->io->writeError(sprintf('  - Applying local recipe for <info>%s</info>', $packageName));
-        } else {
-            $this->io->writeError(sprintf('  - Applying local recipe for <info>%s</info> (override enabled)', $packageName));
-        }
+        $this->logRecipeApplication($packageName, $allowOverride);
 
         $this->initializeFlexObjects();
 
@@ -149,6 +143,7 @@ class RecipeHandler
     ): ?Recipe {
         $packageName = $package->getName();
 
+        // Early return guards for invalid conditions
         if (!$this->isPackageAllowed($packageName)) {
             return null;
         }
@@ -260,6 +255,18 @@ class RecipeHandler
      * Creates the Symfony Flex Lock and Configurator instances if they
      * haven't been initialized yet. Uses lazy initialization to avoid
      * creating these objects until they're actually needed.
+     *
+     * This method mirrors Symfony Flex's initialization pattern:
+     * 1. Creates Lock object for managing symfony.lock file
+     * 2. Builds Options object with standard Symfony directory structure
+     * 3. Creates Configurator for applying recipe changes
+     *
+     * The defaults follow Symfony Flex conventions:
+     * - src-dir: Source code directory
+     * - var-dir: Cache and logs directory
+     * - public-dir: Web root directory
+     * - root-dir: Project root (configurable via extra.symfony.root-dir)
+     * - runtime: Runtime configuration for different environments
      */
     private function initializeFlexObjects(): void
     {
@@ -272,12 +279,14 @@ class RecipeHandler
         $extra = $this->composer->getPackage()->getExtra();
         $flexOptions = array_merge(
             [
-                'src-dir' => 'src',
-                'var-dir' => 'var',
-                'public-dir' => 'public',
-                'root-dir' => $extra['symfony']['root-dir'] ?? '.',
-                'runtime' => $extra['runtime'] ?? [],
+                // Standard Symfony directory structure defaults
+                'src-dir' => 'src',                    // Main source code directory
+                'var-dir' => 'var',                    // Cache, logs, sessions
+                'public-dir' => 'public',              // Web root directory
+                'root-dir' => $extra['symfony']['root-dir'] ?? '.', // Project root
+                'runtime' => $extra['runtime'] ?? [],  // Runtime environment configs
             ],
+            // Merge with any user-defined flex options
             $extra['flex'] ?? [],
         );
 
@@ -310,6 +319,30 @@ class RecipeHandler
         }
 
         return false;
+    }
+
+    /**
+     * Log recipe application with appropriate message.
+     *
+     * @param string $packageName   The package name
+     * @param bool   $allowOverride Whether override is enabled
+     */
+    private function logRecipeApplication(
+        string $packageName,
+        bool $allowOverride,
+    ): void {
+        if (!$allowOverride) {
+            // Manual install behavior: More aggressive approach is acceptable
+            // because the user explicitly initiated this operation.
+            // This differs from automatic Composer operations where we need
+            // to be more cautious about overwriting existing files.
+            $this->io->writeError(sprintf('  - Applying local recipe for <info>%s</info>', $packageName));
+        } else {
+            // Override enabled: Allow recipe to overwrite existing files
+            // This is useful for development environments where frequent
+            // recipe updates are expected and manual intervention is acceptable.
+            $this->io->writeError(sprintf('  - Applying local recipe for <info>%s</info> (override enabled)', $packageName));
+        }
     }
 
     /**

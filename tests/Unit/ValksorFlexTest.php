@@ -213,6 +213,37 @@ class ValksorFlexTest extends TestCase
     }
 
     /**
+     * Test that duplicate uninstall calls for the same package are prevented.
+     *
+     * @throws ReflectionException
+     * @throws JsonException
+     */
+    public function testOnPrePackageUninstallPreventsDuplicates(): void
+    {
+        $package = ComposerMockFactory::createPackage();
+        $event = ComposerMockFactory::createPackageUninstallEvent($package, $this->composer, $this->io);
+
+        // Mock the handler to verify uninstallPackage is called only ONCE
+        $handler = Mockery::mock('ValksorPlugin\RecipeHandler');
+        $handler->shouldReceive('uninstallPackage')
+            ->once()  // Should be called only once despite two event triggers
+            ->with($package)
+            ->andReturn(null);
+
+        // Create plugin with private handler mock using reflection
+        $handlerProperty = new ReflectionClass($this->plugin)->getProperty('handler');
+        $handlerProperty->setValue($this->plugin, $handler);
+
+        // Call uninstall twice for the same package
+        $this->plugin->onPrePackageUninstall($event);
+        $this->plugin->onPrePackageUninstall($event);  // This should be skipped due to duplicate prevention
+
+        // If handler->uninstallPackage is called twice, the test will fail
+        // due to the ->once() expectation
+        $this->expectNotToPerformAssertions();
+    }
+
+    /**
      * @throws ReflectionException
      * @throws JsonException
      */

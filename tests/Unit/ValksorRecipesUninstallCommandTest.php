@@ -231,6 +231,16 @@ class ValksorRecipesUninstallCommandTest extends TestCase
         $this->assertSame(1, $result);
     }
 
+    /**
+     * Test getSuccessMessage method directly.
+     *
+     * @throws ReflectionException
+     */
+    public function testGetSuccessMessage(): void
+    {
+        $this->assertSame('<info>Successfully removed local recipe for test/package.</info>', new ReflectionClass($this->command)->getMethod('getSuccessMessage')->invoke($this->command, 'test/package'));
+    }
+
     public function testPackageArgumentExample(): void
     {
         $argument = $this->command->getDefinition()->getArgument('package');

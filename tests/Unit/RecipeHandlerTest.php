@@ -293,6 +293,30 @@ class RecipeHandlerTest extends TestCase
     }
 
     /**
+     * Test getPackageConfig when 'allow' itself is not an array.
+     *
+     * @throws ReflectionException
+     */
+    public function testGetPackageConfigWithNonArrayAllowConfig(): void
+    {
+        $method = new ReflectionClass($this->handler)->getMethod('getPackageConfig');
+
+        // Set config where 'allow' is a string instead of array
+        $config = [
+            'allow' => 'invalid_string',
+        ];
+
+        $configProperty = new ReflectionClass($this->handler)->getProperty('config');
+        $configProperty->setValue($this->handler, $config);
+
+        $result = $method->invoke($this->handler, 'test/package');
+
+        // Should return empty array when 'allow' is not an array
+        $this->assertIsArray($result);
+        $this->assertEmpty($result);
+    }
+
+    /**
      * Test getPackageConfig with non-array package config.
      *
      * @throws ReflectionException

@@ -276,6 +276,16 @@ class ValksorRecipesInstallCommandTest extends TestCase
         $this->assertSame(1, $result);
     }
 
+    /**
+     * Test getSuccessMessage method directly.
+     *
+     * @throws ReflectionException
+     */
+    public function testGetSuccessMessage(): void
+    {
+        $this->assertSame('<info>Successfully applied local recipe for test/package.</info>', new ReflectionClass($this->command)->getMethod('getSuccessMessage')->invoke($this->command, 'test/package'));
+    }
+
     protected function setUp(): void
     {
         $this->command = new ValksorRecipesInstallCommand();

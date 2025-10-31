@@ -200,6 +200,27 @@ class RecipeHandlerTest extends TestCase
     }
 
     /**
+     * Test private method initializeFlexObjects creates proper instances.
+     *
+     * @throws ReflectionException
+     */
+    public function testInitializeFlexObjectsCreatesInstances(): void
+    {
+        $reflection = new ReflectionClass($this->handler);
+        $method = $reflection->getMethod('initializeFlexObjects');
+
+        // Call the method
+        $method->invoke($this->handler);
+
+        // Verify objects are created
+        $lockProperty = $reflection->getProperty('lock');
+        $configuratorProperty = $reflection->getProperty('configurator');
+
+        $this->assertNotNull($lockProperty->getValue($this->handler));
+        $this->assertNotNull($configuratorProperty->getValue($this->handler));
+    }
+
+    /**
      * Test initializeFlexObjects only runs once.
      *
      * @throws ReflectionException
@@ -325,6 +346,24 @@ class RecipeHandlerTest extends TestCase
         // Cleanup
         unlink($manifestPath);
         rmdir($tempDir);
+    }
+
+    /**
+     * Test private method parseLocalRecipeFiles with recipe that has files.
+     *
+     * @throws ReflectionException
+     */
+    public function testParseLocalRecipeFilesWithRecipeFiles(): void
+    {
+        $method = new ReflectionClass($this->handler)->getMethod('parseLocalRecipeFiles');
+
+        $recipePath = __DIR__ . '/../Fixtures/recipes/invalid-recipe';
+        $manifestPath = $recipePath . '/manifest.json';
+
+        // Should find and parse files in the recipe directory
+        $result = $method->invoke($this->handler, $recipePath, $manifestPath);
+        $this->assertIsArray($result);
+        $this->assertNotEmpty($result);
     }
 
     /**

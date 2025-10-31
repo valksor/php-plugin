@@ -1,5 +1,8 @@
 # ValksorPlugin
 
+[![Maintainability](https://qlty.sh/gh/valksor/projects/php-plugin/maintainability.svg)](https://qlty.sh/gh/valksor/projects/php-plugin)
+[![Code Coverage](https://qlty.sh/gh/valksor/projects/php-plugin/coverage.svg)](https://qlty.sh/gh/valksor/projects/php-plugin)
+
 ⚠️ **IMPORTANT: Composer Plugin Security Requirement**
 
 Starting with Composer 2.2+, you **must explicitly allow** this plugin in your `composer.json` for it to work. Without this configuration, the plugin will be blocked and recipes will not be processed.

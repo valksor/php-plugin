@@ -1,9 +1,24 @@
 {
     "name": "valksor/php-plugin",
-    "description": "WIP",
+    "description": "Composer plugin providing automatic recipe processing for PHP packages, similar to Symfony Flex",
     "license": "BSD-3-Clause",
     "type": "composer-plugin",
+    "keywords": [
+        "composer-plugin",
+        "recipes",
+        "automation",
+        "symfony-flex",
+        "package-management",
+        "auto-discovery",
+        "php",
+        "valksor"
+    ],
     "homepage": "https://github.com/valksor/php-plugin",
+    "support": {
+        "issues": "https://github.com/valksor/php-plugin/issues",
+        "source": "https://github.com/valksor/php-plugin",
+        "docs": "https://github.com/valksor/php-plugin/blob/master/README.md"
+    },
     "require": {
         "php": ">=8.4",
         "composer-plugin-api": "^2",

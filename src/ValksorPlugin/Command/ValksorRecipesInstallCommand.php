@@ -36,8 +36,6 @@ class ValksorRecipesInstallCommand extends BaseCommand
      *
      * Sets up the command name, description, and arguments for the
      * valksor:install command.
-     *
-     * @return void
      */
     protected function configure(): void
     {

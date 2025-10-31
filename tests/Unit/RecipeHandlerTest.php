@@ -44,13 +44,15 @@ class RecipeHandlerTest extends TestCase
     public function testConstructorLoadsConfiguration(): void
     {
         // Test with valksor configuration
-        $composerWithConfig = ComposerMockFactory::createComposer([
-            'valksor' => [
-                'allow' => [
-                    'test/package' => ['allow_override' => true],
+        $composerWithConfig = ComposerMockFactory::createComposer(
+            [
+                'valksor' => [
+                    'allow' => [
+                        'test/package' => ['allow_override' => true],
+                    ],
                 ],
             ],
-        ]);
+        );
 
         $handler = new RecipeHandler($composerWithConfig, $this->io);
         $config = new ReflectionClass($handler)->getProperty('config')->getValue($handler);

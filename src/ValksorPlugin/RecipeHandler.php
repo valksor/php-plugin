@@ -260,8 +260,6 @@ class RecipeHandler
      * Creates the Symfony Flex Lock and Configurator instances if they
      * haven't been initialized yet. Uses lazy initialization to avoid
      * creating these objects until they're actually needed.
-     *
-     * @return void
      */
     private function initializeFlexObjects(): void
     {
@@ -272,13 +270,16 @@ class RecipeHandler
 
         // Build options with defaults (like Symfony Flex does)
         $extra = $this->composer->getPackage()->getExtra();
-        $flexOptions = array_merge([
-            'src-dir' => 'src',
-            'var-dir' => 'var',
-            'public-dir' => 'public',
-            'root-dir' => $extra['symfony']['root-dir'] ?? '.',
-            'runtime' => $extra['runtime'] ?? [],
-        ], $extra['flex'] ?? []);
+        $flexOptions = array_merge(
+            [
+                'src-dir' => 'src',
+                'var-dir' => 'var',
+                'public-dir' => 'public',
+                'root-dir' => $extra['symfony']['root-dir'] ?? '.',
+                'runtime' => $extra['runtime'] ?? [],
+            ],
+            $extra['flex'] ?? [],
+        );
 
         $options = new Options($flexOptions, $this->io, $this->lock);
         $this->configurator = new Configurator($this->composer, $this->io, $options);
@@ -318,7 +319,7 @@ class RecipeHandler
      * the manifest.json file. Returns an array mapping relative file paths
      * to file contents and executable status.
      *
-     * @param string $recipePath  The absolute path to the recipe directory
+     * @param string $recipePath   The absolute path to the recipe directory
      * @param string $manifestPath The absolute path to the manifest.json file
      *
      * @return array<string, array{contents: string|false, executable: bool}> Array of recipe files

@@ -35,8 +35,6 @@ class ValksorRecipesUninstallCommand extends BaseCommand
      *
      * Sets up the command name, description, and arguments for the
      * valksor:uninstall command.
-     *
-     * @return void
      */
     protected function configure(): void
     {

@@ -25,14 +25,14 @@ if (!defined('PHPUNIT_COMPOSER_INSTALL')) {
 $rootDir = dirname(__DIR__);
 
 if (!is_dir($rootDir . '/src')) {
-    throw new RuntimeException('Source directory not found. Please run this script from the plugin root directory.');
+    throw new LogicException('Source directory not found. Please run this script from the plugin root directory.');
 }
 
 // Include Composer autoloader
 $autoloadPath = $rootDir . '/vendor/autoload.php';
 
 if (!file_exists($autoloadPath)) {
-    throw new RuntimeException('Dependencies not installed. Please run "composer install" in the plugin root directory.');
+    throw new LogicException('Dependencies not installed. Please run "composer install" in the plugin root directory.');
 }
 
 require_once $autoloadPath;
@@ -54,16 +54,18 @@ if (!is_dir(TEST_TEMP_DIR)) {
 // Don't convert errors to exceptions - let tests run without interference
 
 // Cleanup function for temp files
-register_shutdown_function(static function (): void {
-    // Clean up any temporary test files if needed
-    if (is_dir(TEST_TEMP_DIR)) {
-        foreach (glob(TEST_TEMP_DIR . '/*') as $file) {
-            if (is_file($file)) {
-                unlink($file);
+register_shutdown_function(
+    static function (): void {
+        // Clean up any temporary test files if needed
+        if (is_dir(TEST_TEMP_DIR)) {
+            foreach (glob(TEST_TEMP_DIR . '/*') as $file) {
+                if (is_file($file)) {
+                    unlink($file);
+                }
             }
         }
-    }
-});
+    },
+);
 
 // Mock some functions that might cause issues in tests
 if (!function_exists('is_executable')) {

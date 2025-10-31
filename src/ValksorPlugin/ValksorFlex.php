@@ -17,6 +17,7 @@ use Composer\Composer;
 use Composer\EventDispatcher\EventSubscriberInterface;
 use Composer\Installer\PackageEvent;
 use Composer\IO\IOInterface;
+use Composer\Package\PackageInterface;
 use Composer\Plugin\Capability\CommandProvider;
 use Composer\Plugin\Capable;
 use Composer\Plugin\PluginInterface;
@@ -116,16 +117,7 @@ class ValksorFlex implements PluginInterface, EventSubscriberInterface, CommandP
         PackageEvent $event,
     ): void {
         $package = $event->getOperation()->getPackage();
-        $packageName = $package->getName();
-
-        // Skip if already processed (handles dev-master/9999999-dev alias duplicates)
-        if (isset($this->processedPackages[$packageName])) {
-            return;
-        }
-
-        $this->processedPackages[$packageName] = true;
-        $this->getHandler($event->getComposer(), $event->getIO())
-            ->processPackage($package, 'install');
+        $this->onPostPackage($package, $event, 'install');
     }
 
     /**
@@ -142,16 +134,8 @@ class ValksorFlex implements PluginInterface, EventSubscriberInterface, CommandP
         PackageEvent $event,
     ): void {
         $package = $event->getOperation()->getTargetPackage();
-        $packageName = $package->getName();
 
-        // Skip if already processed (handles dev-master/9999999-dev alias duplicates)
-        if (isset($this->processedPackages[$packageName])) {
-            return;
-        }
-
-        $this->processedPackages[$packageName] = true;
-        $this->getHandler($event->getComposer(), $event->getIO())
-            ->processPackage($package, 'update');
+        $this->onPostPackage($package, $event, 'update');
     }
 
     /**
@@ -230,5 +214,25 @@ class ValksorFlex implements PluginInterface, EventSubscriberInterface, CommandP
         }
 
         return $this->handler;
+    }
+
+    /**
+     * @throws JsonException
+     */
+    private function onPostPackage(
+        PackageInterface $package,
+        PackageEvent $event,
+        string $type,
+    ): void {
+        $packageName = $package->getName();
+
+        // Skip if already processed (handles dev-master/9999999-dev alias duplicates)
+        if (isset($this->processedPackages[$packageName])) {
+            return;
+        }
+
+        $this->processedPackages[$packageName] = true;
+        $this->getHandler($event->getComposer(), $event->getIO())
+            ->processPackage($package, $type);
     }
 }

@@ -19,7 +19,7 @@ jobs:
         steps:
             # https://github.com/marketplace/actions/checkout
             -   name: Checkout code
-                uses: actions/checkout@v4
+                uses: actions/checkout@v5
                 with:
                     fetch-depth: 0
 
@@ -50,10 +50,10 @@ jobs:
             -   name: Check for security advisories
                 run: |
                     if composer audit --no-dev --locked; then
-                      echo "✅ No security vulnerabilities found in production dependencies"
+                        echo "✅ No security vulnerabilities found in production dependencies"
                     else
-                      echo "❌ Security vulnerabilities found!"
-                      exit 1
+                        echo "❌ Security vulnerabilities found!"
+                        exit 1
                     fi
 
             -   name: Run tests with PHPUnit
@@ -67,7 +67,7 @@ jobs:
                     add-prefix: 'src/ValksorPlugin/'
 
             -   name: Upload coverage reports to GitHub
-                uses: actions/upload-artifact@v4
+                uses: actions/upload-artifact@v5
                 if: always()
                 with:
                     name: coverage-report-php-${{ matrix.php-version }}

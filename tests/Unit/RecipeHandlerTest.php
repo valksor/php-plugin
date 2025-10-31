@@ -328,6 +328,9 @@ class RecipeHandlerTest extends TestCase
         $this->assertTrue($foundConfigFile, 'Should have found config/packages.yaml file');
     }
 
+    /**
+     * @throws ReflectionException
+     */
     public function testParseLocalRecipeFilesWithEmptyDirectory(): void
     {
         $method = new ReflectionClass($this->handler)->getMethod('parseLocalRecipeFiles');
@@ -374,11 +377,13 @@ class RecipeHandlerTest extends TestCase
     public function testProcessPackageHandlesJsonException(): void
     {
         // Create handler with wildcard allow configuration
-        $composerWithWildcard = ComposerMockFactory::createComposer([
-            'valksor' => [
-                'allow' => '*',
+        $composerWithWildcard = ComposerMockFactory::createComposer(
+            [
+                'valksor' => [
+                    'allow' => '*',
+                ],
             ],
-        ]);
+        );
         $handler = new RecipeHandler($composerWithWildcard, $this->io);
 
         $package = ComposerMockFactory::createPackage('test/json-error');
@@ -399,17 +404,19 @@ class RecipeHandlerTest extends TestCase
     /**
      * Test that allow_override passes force option to configurator.
      *
-     * @throws JsonException|ReflectionException
+     * @throws JsonException
      */
     public function testProcessPackageWithAllowOverride(): void
     {
-        $composerWithOverride = ComposerMockFactory::createComposer([
-            'valksor' => [
-                'allow' => [
-                    'test/override-package' => ['allow_override' => true],
+        $composerWithOverride = ComposerMockFactory::createComposer(
+            [
+                'valksor' => [
+                    'allow' => [
+                        'test/override-package' => ['allow_override' => true],
+                    ],
                 ],
             ],
-        ]);
+        );
 
         $handler = new RecipeHandler($composerWithOverride, $this->io);
         $package = ComposerMockFactory::createPackage('test/override-package');
@@ -432,11 +439,13 @@ class RecipeHandlerTest extends TestCase
     public function testProcessPackageWithAllowedPackageAndValidRecipe(): void
     {
         // Create handler with wildcard allow configuration
-        $composerWithWildcard = ComposerMockFactory::createComposer([
-            'valksor' => [
-                'allow' => '*',
+        $composerWithWildcard = ComposerMockFactory::createComposer(
+            [
+                'valksor' => [
+                    'allow' => '*',
+                ],
             ],
-        ]);
+        );
         $handler = new RecipeHandler($composerWithWildcard, $this->io);
 
         $package = ComposerMockFactory::createPackage('test/recipe-package');
@@ -461,11 +470,13 @@ class RecipeHandlerTest extends TestCase
         $package = ComposerMockFactory::createPackage('unknown/package');
 
         // Create handler with restrictive configuration
-        $composerWithRestrictiveConfig = ComposerMockFactory::createComposer([
-            'valksor' => [
-                'allow' => ['allowed/package' => []],
+        $composerWithRestrictiveConfig = ComposerMockFactory::createComposer(
+            [
+                'valksor' => [
+                    'allow' => ['allowed/package' => []],
+                ],
             ],
-        ]);
+        );
 
         $result = new RecipeHandler($composerWithRestrictiveConfig, $this->io)->processPackage($package, 'install');
 
@@ -500,11 +511,13 @@ class RecipeHandlerTest extends TestCase
     public function testProcessPackageWithNoInstallationPath(): void
     {
         // Create handler with wildcard allow configuration
-        $composerWithWildcard = ComposerMockFactory::createComposer([
-            'valksor' => [
-                'allow' => '*',
+        $composerWithWildcard = ComposerMockFactory::createComposer(
+            [
+                'valksor' => [
+                    'allow' => '*',
+                ],
             ],
-        ]);
+        );
         $handler = new RecipeHandler($composerWithWildcard, $this->io);
 
         $package = ComposerMockFactory::createPackage('test/no-path');
@@ -549,11 +562,13 @@ class RecipeHandlerTest extends TestCase
         $package = ComposerMockFactory::createPackage('any/package');
 
         // Create handler with wildcard configuration
-        $composerWithWildcard = ComposerMockFactory::createComposer([
-            'valksor' => [
-                'allow' => '*',
+        $composerWithWildcard = ComposerMockFactory::createComposer(
+            [
+                'valksor' => [
+                    'allow' => '*',
+                ],
             ],
-        ]);
+        );
 
         $handler = new RecipeHandler($composerWithWildcard, $this->io);
 
@@ -575,17 +590,19 @@ class RecipeHandlerTest extends TestCase
     /**
      * Test that allow_override=false does not pass force option.
      *
-     * @throws JsonException|ReflectionException
+     * @throws JsonException
      */
     public function testProcessPackageWithoutAllowOverride(): void
     {
-        $composerWithoutOverride = ComposerMockFactory::createComposer([
-            'valksor' => [
-                'allow' => [
-                    'test/no-override-package' => ['allow_override' => false],
+        $composerWithoutOverride = ComposerMockFactory::createComposer(
+            [
+                'valksor' => [
+                    'allow' => [
+                        'test/no-override-package' => ['allow_override' => false],
+                    ],
                 ],
             ],
-        ]);
+        );
 
         $handler = new RecipeHandler($composerWithoutOverride, $this->io);
         $package = ComposerMockFactory::createPackage('test/no-override-package');
@@ -610,11 +627,13 @@ class RecipeHandlerTest extends TestCase
         $package = ComposerMockFactory::createPackage('unknown/package');
 
         // Create handler with restrictive configuration
-        $composerWithRestrictiveConfig = ComposerMockFactory::createComposer([
-            'valksor' => [
-                'allow' => ['allowed/package' => []],
+        $composerWithRestrictiveConfig = ComposerMockFactory::createComposer(
+            [
+                'valksor' => [
+                    'allow' => ['allowed/package' => []],
+                ],
             ],
-        ]);
+        );
 
         $result = new RecipeHandler($composerWithRestrictiveConfig, $this->io)->uninstallPackage($package);
 
@@ -647,11 +666,13 @@ class RecipeHandlerTest extends TestCase
     public function testUninstallPackageWithValidRecipe(): void
     {
         // Create handler with wildcard allow configuration
-        $composerWithWildcard = ComposerMockFactory::createComposer([
-            'valksor' => [
-                'allow' => '*',
+        $composerWithWildcard = ComposerMockFactory::createComposer(
+            [
+                'valksor' => [
+                    'allow' => '*',
+                ],
             ],
-        ]);
+        );
         $handler = new RecipeHandler($composerWithWildcard, $this->io);
 
         $package = ComposerMockFactory::createPackage('test/recipe-package');

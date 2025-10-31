@@ -145,6 +145,9 @@ class ValksorFlexTest extends TestCase
         $this->assertSame('onPrePackageUninstall', $events['pre-package-uninstall']);
     }
 
+    /**
+     * @throws JsonException
+     */
     public function testOnPostPackageInstallProcessesAllowedPackage(): void
     {
         $package = ComposerMockFactory::createPackage();

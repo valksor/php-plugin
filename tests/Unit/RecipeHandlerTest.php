@@ -358,6 +358,36 @@ class RecipeHandlerTest extends TestCase
     }
 
     /**
+     * Test that allow_override passes force option to configurator.
+     *
+     * @throws JsonException|ReflectionException
+     */
+    public function testProcessPackageWithAllowOverride(): void
+    {
+        $composerWithOverride = ComposerMockFactory::createComposer([
+            'valksor' => [
+                'allow' => [
+                    'test/override-package' => ['allow_override' => true],
+                ],
+            ],
+        ]);
+
+        $handler = new RecipeHandler($composerWithOverride, $this->io);
+        $package = ComposerMockFactory::createPackage('test/override-package');
+
+        // Mock installation manager to return valid recipe path
+        $installManager = Mockery::mock(InstallationManager::class);
+        $installManager->shouldReceive('getInstallPath')
+            ->with($package)
+            ->andReturn(__DIR__ . '/../Fixtures/recipes/valid-recipe');
+
+        $composerWithOverride->shouldReceive('getInstallationManager')->andReturn($installManager);
+
+        $this->expectNotToPerformAssertions();
+        $handler->processPackage($package, 'install');
+    }
+
+    /**
      * @throws JsonException
      */
     public function testProcessPackageWithAllowedPackageAndValidRecipe(): void
@@ -501,6 +531,36 @@ class RecipeHandlerTest extends TestCase
         // Should return null since simple-recipe doesn't exist as a directory structure
         // but the package should be allowed
         $this->assertNull($result);
+    }
+
+    /**
+     * Test that allow_override=false does not pass force option.
+     *
+     * @throws JsonException|ReflectionException
+     */
+    public function testProcessPackageWithoutAllowOverride(): void
+    {
+        $composerWithoutOverride = ComposerMockFactory::createComposer([
+            'valksor' => [
+                'allow' => [
+                    'test/no-override-package' => ['allow_override' => false],
+                ],
+            ],
+        ]);
+
+        $handler = new RecipeHandler($composerWithoutOverride, $this->io);
+        $package = ComposerMockFactory::createPackage('test/no-override-package');
+
+        // Mock installation manager to return valid recipe path
+        $installManager = Mockery::mock(InstallationManager::class);
+        $installManager->shouldReceive('getInstallPath')
+            ->with($package)
+            ->andReturn(__DIR__ . '/../Fixtures/recipes/valid-recipe');
+
+        $composerWithoutOverride->shouldReceive('getInstallationManager')->andReturn($installManager);
+
+        $this->expectNotToPerformAssertions();
+        $handler->processPackage($package, 'install');
     }
 
     /**

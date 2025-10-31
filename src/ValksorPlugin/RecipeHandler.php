@@ -125,7 +125,7 @@ class RecipeHandler
         // Add recipe to lock before installing (like Symfony Flex does)
         $this->lock->set($packageName, ['version' => $package->getPrettyVersion()]);
 
-        $this->configurator->install($localRecipe, $this->lock);
+        $this->configurator->install($localRecipe, $this->lock, ['force' => $allowOverride]);
         $this->lock->write();
 
         return $localRecipe;

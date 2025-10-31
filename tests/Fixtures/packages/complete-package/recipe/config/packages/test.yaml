@@ -1,0 +1,5 @@
+# Test configuration
+test:
+    enabled: true
+    options:
+        debug: false

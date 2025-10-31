@@ -1,0 +1,4 @@
+#!/usr/bin/env php
+<?php
+// Test console script
+echo "Test console\n";

@@ -57,14 +57,22 @@ jobs:
                     fi
 
             -   name: Run tests with PHPUnit
-                run: vendor/bin/phpunit --random-order --coverage-cobertura=coverage.xml
+                run: vendor/bin/phpunit --random-order --coverage-clover=coverage.xml --log-junit junit.xml
 
-            -   name: Upload coverage to Qlty
-                uses: qltysh/qlty-action/coverage@v2
+            -   name: Upload coverage to Codecov
+                uses: codecov/codecov-action@v5
+                env:
+                    CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
                 with:
-                    token: ${{ secrets.QLTY_COVERAGE_TOKEN }}
-                    files: "coverage.xml"
-                    add-prefix: 'src/ValksorPlugin/'
+                    files: ./coverage.xml
+                    fail_ci_if_error: true
+                    verbose: true
+
+            -   name: Upload test results to Codecov
+                if: ${{ !cancelled() }}
+                uses: codecov/test-results-action@v1
+                with:
+                    token: ${{ secrets.CODECOV_TOKEN }}
 
             -   name: Upload coverage reports to GitHub
                 uses: actions/upload-artifact@v5

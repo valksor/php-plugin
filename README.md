@@ -1,7 +1,6 @@
 # ValksorPlugin
 
-[![Maintainability](https://qlty.sh/gh/valksor/projects/php-plugin/maintainability.svg)](https://qlty.sh/gh/valksor/projects/php-plugin)
-[![Code Coverage](https://qlty.sh/gh/valksor/projects/php-plugin/coverage.svg)](https://qlty.sh/gh/valksor/projects/php-plugin)
+[![codecov](https://codecov.io/gh/valksor/php-plugin/graph/badge.svg?token=4O1QOZUDJW)](https://codecov.io/gh/valksor/php-plugin)
 
 ⚠️ **IMPORTANT: Composer Plugin Security Requirement**
 

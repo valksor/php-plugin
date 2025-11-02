@@ -41,7 +41,7 @@
     },
     "autoload-dev": {
         "psr-4": {
-            "ValksorPlugin\\Tests\\": "tests/"
+            "ValksorPlugin\\Tests\\": "Tests/"
         }
     },
     "config": {

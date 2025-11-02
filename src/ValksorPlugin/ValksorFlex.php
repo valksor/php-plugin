@@ -14,6 +14,9 @@ namespace ValksorPlugin;
 
 use Composer\Command\BaseCommand;
 use Composer\Composer;
+use Composer\DependencyResolver\Operation\InstallOperation;
+use Composer\DependencyResolver\Operation\UninstallOperation;
+use Composer\DependencyResolver\Operation\UpdateOperation;
 use Composer\EventDispatcher\EventSubscriberInterface;
 use Composer\Installer\PackageEvent;
 use Composer\IO\IOInterface;
@@ -21,7 +24,6 @@ use Composer\Package\PackageInterface;
 use Composer\Plugin\Capability\CommandProvider;
 use Composer\Plugin\Capable;
 use Composer\Plugin\PluginInterface;
-use JsonException;
 use ValksorPlugin\Command\ValksorRecipesInstallCommand;
 use ValksorPlugin\Command\ValksorRecipesUninstallCommand;
 
@@ -110,13 +112,14 @@ class ValksorFlex implements PluginInterface, EventSubscriberInterface, CommandP
      * Tracks processed packages to avoid handling duplicates (e.g., dev-master/9999999-dev aliases).
      *
      * @param PackageEvent $event The Composer package event
-     *
-     * @throws JsonException When recipe manifest cannot be parsed
      */
     public function onPostPackageInstall(
         PackageEvent $event,
     ): void {
-        $package = $event->getOperation()->getPackage();
+        /** @var InstallOperation $operation */
+        $operation = $event->getOperation();
+
+        $package = $operation->getPackage();
         $this->onPostPackage($package, $event, 'install');
     }
 
@@ -127,13 +130,14 @@ class ValksorFlex implements PluginInterface, EventSubscriberInterface, CommandP
      * stays in sync with the new package version.
      *
      * @param PackageEvent $event The Composer package event
-     *
-     * @throws JsonException When recipe manifest cannot be parsed
      */
     public function onPostPackageUpdate(
         PackageEvent $event,
     ): void {
-        $package = $event->getOperation()->getTargetPackage();
+        /** @var UpdateOperation $operation */
+        $operation = $event->getOperation();
+
+        $package = $operation->getTargetPackage();
 
         $this->onPostPackage($package, $event, 'update');
     }
@@ -145,13 +149,14 @@ class ValksorFlex implements PluginInterface, EventSubscriberInterface, CommandP
      * This ensures proper cleanup of configuration files and settings.
      *
      * @param PackageEvent $event The Composer package event
-     *
-     * @throws JsonException When recipe manifest cannot be parsed
      */
     public function onPrePackageUninstall(
         PackageEvent $event,
     ): void {
-        $package = $event->getOperation()->getPackage();
+        /** @var UninstallOperation $operation */
+        $operation = $event->getOperation();
+
+        $package = $operation->getPackage();
         $packageName = $package->getName();
 
         // Skip if already processed (handles Composer package alias duplicates)

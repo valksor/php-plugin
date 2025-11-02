@@ -15,7 +15,6 @@ namespace ValksorPlugin\Command;
 use Composer\Composer;
 use Composer\IO\IOInterface;
 use Composer\Package\PackageInterface;
-use JsonException;
 use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
@@ -59,8 +58,6 @@ class ValksorRecipesInstallCommand extends AbstractValksorRecipeCommand
      * @param OutputInterface $output The command output interface
      *
      * @return int Command exit code (0 for success, 1 for error)
-     *
-     * @throws JsonException When recipe manifest cannot be parsed
      */
     protected function execute(
         InputInterface $input,
@@ -142,8 +139,6 @@ class ValksorRecipesInstallCommand extends AbstractValksorRecipeCommand
      * @param PackageInterface $package The package to process the recipe for
      *
      * @return Recipe|null The applied recipe, or null if no recipe was found/processed
-     *
-     * @throws JsonException When the recipe manifest cannot be parsed
      */
     protected function processPackage(
         RecipeHandler $handler,
@@ -160,8 +155,6 @@ class ValksorRecipesInstallCommand extends AbstractValksorRecipeCommand
      * @param IOInterface $io       The I/O interface
      *
      * @return int Command exit code (always 0 for batch processing)
-     *
-     * @throws JsonException
      */
     private function processAllPackages(
         Composer $composer,

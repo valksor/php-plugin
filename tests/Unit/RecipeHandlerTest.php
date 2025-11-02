@@ -15,7 +15,6 @@ namespace ValksorPlugin\Tests\Unit;
 use Composer\Composer;
 use Composer\Installer\InstallationManager;
 use Composer\IO\IOInterface;
-use JsonException;
 use Mockery;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProvider;
@@ -98,6 +97,57 @@ class RecipeHandlerTest extends TestCase
         $composerWithWildcard->shouldReceive('getInstallationManager')->andReturn($installManager);
 
         $this->assertNull(new ReflectionClass($handler)->getMethod('getLocalRecipe')->invoke($handler, $package, 'install'));
+    }
+
+    /**
+     * Ensure invalid manifest files trigger warning logs.
+     *
+     * @throws ReflectionException
+     */
+    public function testGetLocalRecipeLogsInvalidManifestWarning(): void
+    {
+        $io = Mockery::mock(IOInterface::class);
+        $io->shouldReceive('write')->andReturn(null);
+        $io->shouldReceive('writeError')
+            ->once()
+            ->with(Mockery::on(static fn (string $message): bool => str_contains($message, 'Warning: Invalid manifest.json')));
+        $io->shouldReceive('isVerbose')->andReturnFalse();
+        $io->shouldReceive('isDebug')->andReturnFalse();
+
+        $rootPackage = ComposerMockFactory::createRootPackage();
+        $composer = Mockery::mock(Composer::class);
+        $composer->shouldReceive('getPackage')->andReturn($rootPackage);
+        $handler = new RecipeHandler($composer, $io);
+
+        $package = ComposerMockFactory::createPackage('test/json-warning');
+
+        $installDir = sys_get_temp_dir() . '/invalid-recipe-' . uniqid('', true);
+        $recipeDir = $installDir . '/recipe';
+        mkdir($recipeDir, 0o777, true);
+        file_put_contents($recipeDir . '/manifest.json', '{ invalid json }');
+
+        $installManager = Mockery::mock(InstallationManager::class);
+        $installManager->shouldReceive('getInstallPath')
+            ->with($package)
+            ->andReturn($installDir);
+
+        $composer->shouldReceive('getInstallationManager')->andReturn($installManager);
+
+        $method = new ReflectionClass($handler)->getMethod('getLocalRecipe');
+
+        $this->assertNull($method->invoke($handler, $package, 'install'));
+
+        if (is_file($recipeDir . '/manifest.json')) {
+            unlink($recipeDir . '/manifest.json');
+        }
+
+        if (is_dir($recipeDir)) {
+            rmdir($recipeDir);
+        }
+
+        if (is_dir($installDir)) {
+            rmdir($installDir);
+        }
     }
 
     /**
@@ -195,6 +245,47 @@ class RecipeHandlerTest extends TestCase
         $recipe = $method->invoke($this->handler, $package, 'install');
 
         $this->assertNull($recipe);
+    }
+
+    /**
+     * Ensure missing manifest files are handled gracefully.
+     *
+     * @throws ReflectionException
+     */
+    public function testGetLocalRecipeWithMissingManifestFile(): void
+    {
+        $package = ComposerMockFactory::createPackage('test/missing-manifest');
+
+        $installDir = sys_get_temp_dir() . '/recipe-handler-' . uniqid('', true);
+        $recipeDir = $installDir . '/recipe';
+        mkdir($recipeDir, 0o777, true);
+        file_put_contents($recipeDir . '/dummy.txt', 'dummy');
+
+        $rootPackage = ComposerMockFactory::createRootPackage();
+        $composer = Mockery::mock(Composer::class);
+        $composer->shouldReceive('getPackage')->andReturn($rootPackage);
+
+        $installManager = Mockery::mock(InstallationManager::class);
+        $installManager->shouldReceive('getInstallPath')
+            ->with($package)
+            ->andReturn($installDir);
+        $composer->shouldReceive('getInstallationManager')->andReturn($installManager);
+
+        $handler = new RecipeHandler($composer, $this->io);
+        $method = new ReflectionClass($handler)->getMethod('getLocalRecipe');
+        $this->assertNull($method->invoke($handler, $package, 'install'));
+
+        if (is_file($recipeDir . '/dummy.txt')) {
+            unlink($recipeDir . '/dummy.txt');
+        }
+
+        if (is_dir($recipeDir)) {
+            rmdir($recipeDir);
+        }
+
+        if (is_dir($installDir)) {
+            rmdir($installDir);
+        }
     }
 
     /**
@@ -452,7 +543,7 @@ class RecipeHandlerTest extends TestCase
         $handler = new RecipeHandler($composer, $io);
 
         $method = new ReflectionClass($handler)->getMethod('logRecipeApplication');
-        $method->invoke($handler, 'test/package', true);
+        $this->assertNull($method->invoke($handler, 'test/package', true));
     }
 
     /**
@@ -472,7 +563,49 @@ class RecipeHandlerTest extends TestCase
         $handler = new RecipeHandler($composer, $io);
 
         $method = new ReflectionClass($handler)->getMethod('logRecipeApplication');
-        $method->invoke($handler, 'test/package', false);
+        $this->assertNull($method->invoke($handler, 'test/package', false));
+    }
+
+    /**
+     * @throws ReflectionException
+     */
+    public function testParseLocalRecipeFilesSkipsDirectories(): void
+    {
+        $method = new ReflectionClass($this->handler)->getMethod('parseLocalRecipeFiles');
+
+        $baseDir = sys_get_temp_dir() . '/recipe-handler-files-' . uniqid('', true);
+        $recipeDir = $baseDir . '/recipe';
+        $nestedDir = $recipeDir . '/nested';
+        mkdir($nestedDir, 0o777, true);
+
+        $manifestPath = $recipeDir . '/manifest.json';
+        file_put_contents($manifestPath, '{}');
+        file_put_contents($nestedDir . '/file.txt', 'content');
+
+        $result = $method->invoke($this->handler, $recipeDir, $manifestPath);
+
+        $this->assertArrayHasKey('nested/file.txt', $result);
+        $this->assertArrayNotHasKey('nested', $result);
+
+        if (is_file($nestedDir . '/file.txt')) {
+            unlink($nestedDir . '/file.txt');
+        }
+
+        if (is_file($manifestPath)) {
+            unlink($manifestPath);
+        }
+
+        if (is_dir($nestedDir)) {
+            rmdir($nestedDir);
+        }
+
+        if (is_dir($recipeDir)) {
+            rmdir($recipeDir);
+        }
+
+        if (is_dir($baseDir)) {
+            rmdir($baseDir);
+        }
     }
 
     /**
@@ -628,8 +761,6 @@ class RecipeHandlerTest extends TestCase
      * - Lock file management
      * - Configurator integration
      * - Recipe object return
-     *
-     * @throws JsonException
      */
     public function testProcessPackageCompleteFlowWithValidRecipe(): void
     {
@@ -700,8 +831,6 @@ class RecipeHandlerTest extends TestCase
 
     /**
      * Test processPackage with JsonException handling.
-     *
-     * @throws JsonException
      */
     public function testProcessPackageHandlesJsonException(): void
     {
@@ -737,8 +866,6 @@ class RecipeHandlerTest extends TestCase
      * - Package allowlist validation (wildcard allows all packages)
      * - Recipe discovery from package directory
      * - Recipe processing reaches the Symfony Flex integration point
-     *
-     * @throws JsonException
      */
     public function testProcessPackageSuccessfulInstallation(): void
     {
@@ -771,8 +898,6 @@ class RecipeHandlerTest extends TestCase
 
     /**
      * Test that allow_override passes force option to configurator.
-     *
-     * @throws JsonException
      */
     public function testProcessPackageWithAllowOverride(): void
     {
@@ -803,8 +928,6 @@ class RecipeHandlerTest extends TestCase
 
     /**
      * Test processPackage with allow_override=true passes force option.
-     *
-     * @throws JsonException
      */
     public function testProcessPackageWithAllowOverridePassesForceOption(): void
     {
@@ -870,9 +993,6 @@ class RecipeHandlerTest extends TestCase
         $this->assertInstanceOf(Recipe::class, $result);
     }
 
-    /**
-     * @throws JsonException
-     */
     public function testProcessPackageWithAllowedPackageAndValidRecipe(): void
     {
         // Create handler with wildcard allow configuration
@@ -899,9 +1019,6 @@ class RecipeHandlerTest extends TestCase
         $handler->processPackage($package, 'install');
     }
 
-    /**
-     * @throws JsonException
-     */
     public function testProcessPackageWithDisallowedPackage(): void
     {
         $package = ComposerMockFactory::createPackage('unknown/package');
@@ -920,9 +1037,6 @@ class RecipeHandlerTest extends TestCase
         $this->assertNull($result);
     }
 
-    /**
-     * @throws JsonException
-     */
     public function testProcessPackageWithInvalidManifestJson(): void
     {
         $package = ComposerMockFactory::createPackage('test/invalid-recipe');
@@ -942,8 +1056,6 @@ class RecipeHandlerTest extends TestCase
 
     /**
      * Test processPackage with no installation path.
-     *
-     * @throws JsonException
      */
     public function testProcessPackageWithNoInstallationPath(): void
     {
@@ -971,9 +1083,6 @@ class RecipeHandlerTest extends TestCase
         $this->assertNull($result);
     }
 
-    /**
-     * @throws JsonException
-     */
     public function testProcessPackageWithNoRecipeDirectory(): void
     {
         $package = ComposerMockFactory::createPackage('test/no-recipe');
@@ -991,9 +1100,6 @@ class RecipeHandlerTest extends TestCase
         $this->assertNull($result);
     }
 
-    /**
-     * @throws JsonException
-     */
     public function testProcessPackageWithWildcardAllow(): void
     {
         $package = ComposerMockFactory::createPackage('any/package');
@@ -1026,8 +1132,6 @@ class RecipeHandlerTest extends TestCase
 
     /**
      * Test that allow_override=false does not pass force option.
-     *
-     * @throws JsonException
      */
     public function testProcessPackageWithoutAllowOverride(): void
     {
@@ -1064,8 +1168,6 @@ class RecipeHandlerTest extends TestCase
      * - Lock file removal
      * - Configurator unconfigure call
      * - Recipe object return
-     *
-     * @throws JsonException
      */
     public function testUninstallPackageCompleteFlowWithValidRecipe(): void
     {
@@ -1138,8 +1240,6 @@ class RecipeHandlerTest extends TestCase
      * - Package allowlist validation (wildcard allows all packages)
      * - Recipe discovery from package directory
      * - Recipe processing reaches the Symfony Flex uninstall integration point
-     *
-     * @throws JsonException
      */
     public function testUninstallPackageSuccessfulRemoval(): void
     {
@@ -1170,9 +1270,6 @@ class RecipeHandlerTest extends TestCase
         $this->assertNull($result);
     }
 
-    /**
-     * @throws JsonException
-     */
     public function testUninstallPackageWithDisallowedPackage(): void
     {
         $package = ComposerMockFactory::createPackage('unknown/package');
@@ -1191,9 +1288,6 @@ class RecipeHandlerTest extends TestCase
         $this->assertNull($result);
     }
 
-    /**
-     * @throws JsonException
-     */
     public function testUninstallPackageWithNoRecipe(): void
     {
         $package = ComposerMockFactory::createPackage('test/no-recipe');
@@ -1211,9 +1305,6 @@ class RecipeHandlerTest extends TestCase
         $this->assertNull($result);
     }
 
-    /**
-     * @throws JsonException
-     */
     public function testUninstallPackageWithValidRecipe(): void
     {
         // Create handler with wildcard allow configuration

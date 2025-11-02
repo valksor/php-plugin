@@ -89,8 +89,6 @@ class RecipeHandler
      * @param string           $operation The operation type ('install', 'update')
      *
      * @return Recipe|null The applied recipe, or null if no recipe found/allowed
-     *
-     * @throws JsonException When recipe manifest cannot be parsed
      */
     public function processPackage(
         PackageInterface $package,
@@ -133,8 +131,6 @@ class RecipeHandler
      * @param PackageInterface $package The package to uninstall the recipe for
      *
      * @return Recipe|null The uninstalled recipe, or null if no recipe found/allowed
-     *
-     * @throws JsonException When recipe manifest cannot be parsed
      */
     public function uninstallPackage(
         PackageInterface $package,
@@ -180,8 +176,6 @@ class RecipeHandler
      * @param string           $operation The operation type ('install', 'update', 'uninstall')
      *
      * @return Recipe|null The discovered recipe, or null if no recipe found
-     *
-     * @throws JsonException When recipe manifest cannot be parsed
      */
     private function getLocalRecipe(
         PackageInterface $package,
@@ -362,6 +356,7 @@ class RecipeHandler
         $files = [];
         $iterator = new RecursiveIteratorIterator(
             new RecursiveDirectoryIterator($recipePath, FilesystemIterator::SKIP_DOTS),
+            RecursiveIteratorIterator::SELF_FIRST,
         );
 
         foreach ($iterator as $file) {

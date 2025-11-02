@@ -225,9 +225,6 @@ class ValksorFlex implements PluginInterface, EventSubscriberInterface, CommandP
         return $this->handler;
     }
 
-    /**
-     * @throws JsonException
-     */
     private function onPostPackage(
         PackageInterface $package,
         PackageEvent $event,

@@ -12,8 +12,10 @@
 
 namespace ValksorPlugin\Tests\Unit;
 
+use Composer\Composer;
 use Composer\Config;
 use Composer\Installer\InstallationManager;
+use Composer\IO\IOInterface;
 use Composer\Package\Locker;
 use Composer\Repository\LockArrayRepository;
 use Mockery;
@@ -25,7 +27,9 @@ use Symfony\Component\Console\Application;
 use Symfony\Component\Console\Helper\HelperSet;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
+use Symfony\Flex\Recipe;
 use ValksorPlugin\Command\ValksorRecipesInstallCommand;
+use ValksorPlugin\RecipeHandler;
 use ValksorPlugin\Tests\Mocks\ComposerMockFactory;
 
 /**
@@ -77,6 +81,76 @@ class ValksorRecipesInstallCommandTest extends TestCase
         $this->assertSame('execute', $method->getName());
         $this->assertSame(2, $method->getNumberOfParameters());
         $this->assertSame('int', $method->getReturnType()->getName());
+    }
+
+    /**
+     * @throws ReflectionException
+     */
+    public function testExecuteProcessesAllPackagesWithSuccessMessage(): void
+    {
+        $packageOne = ComposerMockFactory::createPackage('test/package-one');
+        $packageTwo = ComposerMockFactory::createPackage('test/package-two');
+
+        $handler = Mockery::mock(RecipeHandler::class);
+        $handler->shouldReceive('processPackage')
+            ->once()
+            ->with($packageOne, 'update')
+            ->andReturn(Mockery::mock(Recipe::class));
+        $handler->shouldReceive('processPackage')
+            ->once()
+            ->with($packageTwo, 'update')
+            ->andReturn(null);
+
+        $command = new class($handler) extends ValksorRecipesInstallCommand {
+            public function __construct(
+                private readonly RecipeHandler $testHandler,
+            ) {
+                parent::__construct();
+            }
+
+            protected function createRecipeHandler(
+                Composer $composer,
+                IOInterface $io,
+            ): RecipeHandler {
+                return $this->testHandler;
+            }
+        };
+
+        $composer = ComposerMockFactory::createComposer();
+
+        $locker = Mockery::mock(Locker::class);
+        $locker->shouldReceive('isLocked')->andReturn(true);
+        $repository = Mockery::mock(LockArrayRepository::class);
+        $repository->shouldReceive('getPackages')->andReturn([$packageOne, $packageTwo]);
+        $locker->shouldReceive('getLockedRepository')->andReturn($repository);
+        $composer->shouldReceive('getLocker')->andReturn($locker);
+        $composer->shouldReceive('getConfig')->andReturn(Mockery::mock(Config::class));
+
+        $application = Mockery::mock(Application::class);
+        $application->shouldReceive('getHelperSet')->andReturn(Mockery::mock(HelperSet::class));
+
+        $io = Mockery::mock(IOInterface::class);
+        $io->shouldReceive('writeError')
+            ->once()
+            ->with('<info>Searching for local recipes to apply...</info>');
+        $io->shouldReceive('writeError')
+            ->once()
+            ->with('<info>Successfully applied 1 local recipe(s).</info>');
+        $io->shouldReceive('write')->andReturn(null);
+        $io->shouldReceive('isVerbose')->andReturnFalse();
+        $io->shouldReceive('isDebug')->andReturnFalse();
+
+        $input = Mockery::mock(InputInterface::class);
+        $output = Mockery::mock(OutputInterface::class);
+        $input->shouldReceive('getArgument')->with('package')->andReturn(null);
+
+        $command->setApplication($application);
+        $command->setComposer($composer);
+        $command->setIO($io);
+
+        $result = new ReflectionClass($command)->getMethod('execute')->invoke($command, $input, $output);
+
+        $this->assertSame(0, $result);
     }
 
     /**
@@ -227,6 +301,71 @@ class ValksorRecipesInstallCommandTest extends TestCase
 
         $result = new ReflectionClass($this->command)->getMethod('execute')->invoke($this->command, $this->input, $this->output);
         $this->assertSame(1, $result);
+    }
+
+    /**
+     * @throws ReflectionException
+     */
+    public function testExecuteWithSpecificPackageReturnsSuccessCode(): void
+    {
+        $package = ComposerMockFactory::createPackage('test/successful-package');
+
+        $handler = Mockery::mock(RecipeHandler::class);
+        $handler->shouldReceive('processPackage')
+            ->once()
+            ->with($package, 'update')
+            ->andReturn(Mockery::mock(Recipe::class));
+
+        $command = new class($handler) extends ValksorRecipesInstallCommand {
+            public function __construct(
+                private readonly RecipeHandler $testHandler,
+            ) {
+                parent::__construct();
+            }
+
+            protected function createRecipeHandler(
+                Composer $composer,
+                IOInterface $io,
+            ): RecipeHandler {
+                return $this->testHandler;
+            }
+        };
+
+        $composer = ComposerMockFactory::createComposer();
+
+        $locker = Mockery::mock(Locker::class);
+        $locker->shouldReceive('isLocked')->andReturn(true);
+        $repository = Mockery::mock(LockArrayRepository::class);
+        $repository->shouldReceive('getPackages')->andReturn([$package]);
+        $locker->shouldReceive('getLockedRepository')->andReturn($repository);
+        $composer->shouldReceive('getLocker')->andReturn($locker);
+        $composer->shouldReceive('getConfig')->andReturn(Mockery::mock(Config::class));
+
+        $application = Mockery::mock(Application::class);
+        $application->shouldReceive('getHelperSet')->andReturn(Mockery::mock(HelperSet::class));
+
+        $io = Mockery::mock(IOInterface::class);
+        $io->shouldReceive('writeError')
+            ->once()
+            ->with('<info>Searching for local recipe to apply for test/successful-package...</info>');
+        $io->shouldReceive('writeError')
+            ->once()
+            ->with('<info>Successfully applied local recipe for test/successful-package.</info>');
+        $io->shouldReceive('write')->andReturn(null);
+        $io->shouldReceive('isVerbose')->andReturnFalse();
+        $io->shouldReceive('isDebug')->andReturnFalse();
+
+        $input = Mockery::mock(InputInterface::class);
+        $output = Mockery::mock(OutputInterface::class);
+        $input->shouldReceive('getArgument')->with('package')->andReturn('test/successful-package');
+
+        $command->setApplication($application);
+        $command->setComposer($composer);
+        $command->setIO($io);
+
+        $result = new ReflectionClass($command)->getMethod('execute')->invoke($command, $input, $output);
+
+        $this->assertSame(0, $result);
     }
 
     /**

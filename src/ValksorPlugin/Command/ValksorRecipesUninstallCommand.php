@@ -13,7 +13,6 @@
 namespace ValksorPlugin\Command;
 
 use Composer\Package\PackageInterface;
-use JsonException;
 use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
@@ -132,8 +131,6 @@ class ValksorRecipesUninstallCommand extends AbstractValksorRecipeCommand
      * @param PackageInterface $package The package to uninstall the recipe for
      *
      * @return Recipe|null The uninstalled recipe, or null if no recipe was found/processed
-     *
-     * @throws JsonException When the recipe manifest cannot be parsed
      */
     protected function processPackage(
         RecipeHandler $handler,

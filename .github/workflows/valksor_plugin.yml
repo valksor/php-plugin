@@ -1,5 +1,3 @@
-name: Tests
-
 on:
     push:
         branches:
@@ -36,10 +34,12 @@ jobs:
             -   name: Cache Composer dependencies
                 uses: actions/cache@v4
                 with:
-                    path: ~/.composer/cache
+                    path: |
+                        ~/.composer/cache
+                        vendor/
                     key: ${{ runner.os }}-composer-${{ matrix.php-version }}-${{ hashFiles('**/composer.json') }}
                     restore-keys: |
-                        ${{ runner.os }}-composer-${{ matrix.php-version }}-${{ runner.os }}-composer-
+                        ${{ runner.os }}-composer-${{ matrix.php-version }}-
 
             -   name: Validate composer.json and composer.lock
                 run: composer validate
@@ -57,14 +57,14 @@ jobs:
                     fi
 
             -   name: Run tests with PHPUnit
-                run: vendor/bin/phpunit --random-order --coverage-clover=coverage.xml --log-junit junit.xml
+                run: php -d xdebug.mode=coverage vendor/bin/phpunit
 
             -   name: Upload coverage to Codecov
                 uses: codecov/codecov-action@v5
                 env:
                     CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
                 with:
-                    files: ./coverage.xml
+                    files: .coverage/clover.xml
                     fail_ci_if_error: true
                     verbose: true
 
@@ -73,6 +73,7 @@ jobs:
                 uses: codecov/test-results-action@v1
                 with:
                     token: ${{ secrets.CODECOV_TOKEN }}
+                    files: .coverage/junit.xml
 
             -   name: Upload coverage reports to GitHub
                 uses: actions/upload-artifact@v5
@@ -80,5 +81,5 @@ jobs:
                 with:
                     name: coverage-report-php-${{ matrix.php-version }}
                     path: |
-                        coverage.xml
+                        .coverage/clover.xml
                     retention-days: 1

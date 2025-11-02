@@ -32,11 +32,9 @@ use function is_array;
 use function is_dir;
 use function is_file;
 use function json_decode;
-use function json_last_error;
 use function sprintf;
 use function str_replace;
 
-use const JSON_ERROR_NONE;
 use const JSON_THROW_ON_ERROR;
 
 /**
@@ -202,9 +200,9 @@ class RecipeHandler
             return null;
         }
 
-        $manifest = json_decode(file_get_contents($manifestPath), true, 512, JSON_THROW_ON_ERROR);
-
-        if (JSON_ERROR_NONE !== json_last_error()) {
+        try {
+            $manifest = json_decode(file_get_contents($manifestPath), true, 512, JSON_THROW_ON_ERROR);
+        } catch (JsonException) {
             $this->io->writeError(sprintf('  - <error>Warning: Invalid manifest.json in %s</error>', $recipePath));
 
             return null;

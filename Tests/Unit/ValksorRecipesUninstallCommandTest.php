@@ -25,6 +25,7 @@ use Symfony\Component\Console\Helper\HelperSet;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
 use ValksorPlugin\Command\ValksorRecipesUninstallCommand;
+use ValksorPlugin\RecipeHandler;
 use ValksorPlugin\Tests\Mocks\ComposerMockFactory;
 
 /**
@@ -33,6 +34,7 @@ use ValksorPlugin\Tests\Mocks\ComposerMockFactory;
  * Tests the uninstall command configuration and basic functionality.
  */
 #[CoversClass(ValksorRecipesUninstallCommand::class)]
+#[CoversClass(RecipeHandler::class)]
 class ValksorRecipesUninstallCommandTest extends TestCase
 {
     private ValksorRecipesUninstallCommand $command;

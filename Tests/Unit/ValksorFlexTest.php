@@ -24,6 +24,7 @@ use ReflectionClass;
 use ReflectionException;
 use ValksorPlugin\Command\ValksorRecipesInstallCommand;
 use ValksorPlugin\Command\ValksorRecipesUninstallCommand;
+use ValksorPlugin\RecipeHandler;
 use ValksorPlugin\Tests\Mocks\ComposerMockFactory;
 use ValksorPlugin\ValksorFlex;
 
@@ -34,6 +35,9 @@ use ValksorPlugin\ValksorFlex;
  * event handling, command providing, and integration with Composer.
  */
 #[CoversClass(ValksorFlex::class)]
+#[CoversClass(RecipeHandler::class)]
+#[CoversClass(ValksorRecipesInstallCommand::class)]
+#[CoversClass(ValksorRecipesUninstallCommand::class)]
 class ValksorFlexTest extends TestCase
 {
     private Composer $composer;

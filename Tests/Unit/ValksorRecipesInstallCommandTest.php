@@ -38,6 +38,7 @@ use ValksorPlugin\Tests\Mocks\ComposerMockFactory;
  * Tests the install command configuration and basic functionality.
  */
 #[CoversClass(ValksorRecipesInstallCommand::class)]
+#[CoversClass(RecipeHandler::class)]
 class ValksorRecipesInstallCommandTest extends TestCase
 {
     private ValksorRecipesInstallCommand $command;

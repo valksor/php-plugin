@@ -7,7 +7,7 @@ on:
 jobs:
     tests:
         name: Tests on PHP ${{ matrix.php-version }}
-        runs-on: self-arm
+        runs-on: ubuntu-latest
 
         strategy:
             fail-fast: false

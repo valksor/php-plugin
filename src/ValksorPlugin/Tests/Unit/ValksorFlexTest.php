@@ -81,7 +81,7 @@ class ValksorFlexTest extends TestCase
         $event2 = ComposerMockFactory::createPackageInstallEvent($package, $this->composer, $this->io);
 
         // Mock the handler to verify it's only called once for duplicates
-        $handler = Mockery::mock('ValksorPlugin\RecipeHandler');
+        $handler = Mockery::mock(RecipeHandler::class);
         $handler->shouldReceive('processPackage')
             ->once() // Should only be called once for duplicates
             ->with($package, 'install')
@@ -130,7 +130,7 @@ class ValksorFlexTest extends TestCase
         $handler2 = $getHandlerMethod->invoke($this->plugin, $this->composer, $this->io);
 
         $this->assertSame($handler1, $handler2, 'Handler should be created once and reused');
-        $this->assertInstanceOf('ValksorPlugin\RecipeHandler', $handler1);
+        $this->assertInstanceOf(RecipeHandler::class, $handler1);
     }
 
     public function testGetSubscribedEventsReturnsCorrectEvents(): void
@@ -174,7 +174,7 @@ class ValksorFlexTest extends TestCase
         $event2 = ComposerMockFactory::createPackageInstallEvent($package, $this->composer, $this->io);
 
         // Mock the handler to verify processPackage is only called once for duplicates
-        $handler = Mockery::mock('ValksorPlugin\RecipeHandler');
+        $handler = Mockery::mock(RecipeHandler::class);
         $handler->shouldReceive('processPackage')
             ->once() // Should only be called once, skip duplicate
             ->with($package, 'install')
@@ -202,7 +202,7 @@ class ValksorFlexTest extends TestCase
         $event = ComposerMockFactory::createPackageUpdateEvent($initialPackage, $targetPackage, $this->composer, $this->io);
 
         // Mock the handler to verify it processes the target package with 'update' operation
-        $handler = Mockery::mock('ValksorPlugin\RecipeHandler');
+        $handler = Mockery::mock(RecipeHandler::class);
         $handler->shouldReceive('processPackage')
             ->once()
             ->with($targetPackage, 'update')
@@ -228,7 +228,7 @@ class ValksorFlexTest extends TestCase
         $event = ComposerMockFactory::createPackageUninstallEvent($package, $this->composer, $this->io);
 
         // Mock the handler to verify uninstallPackage is called only ONCE
-        $handler = Mockery::mock('ValksorPlugin\RecipeHandler');
+        $handler = Mockery::mock(RecipeHandler::class);
         $handler->shouldReceive('uninstallPackage')
             ->once()  // Should be called only once despite two event triggers
             ->with($package)
@@ -257,7 +257,7 @@ class ValksorFlexTest extends TestCase
         $event = ComposerMockFactory::createPackageUninstallEvent($package, $this->composer, $this->io);
 
         // Mock the handler to verify uninstallPackage is called with the correct package
-        $handler = Mockery::mock('ValksorPlugin\RecipeHandler');
+        $handler = Mockery::mock(RecipeHandler::class);
         $handler->shouldReceive('uninstallPackage')
             ->once()
             ->with($package)

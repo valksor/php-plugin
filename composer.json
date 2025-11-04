@@ -37,7 +37,13 @@
     "autoload": {
         "psr-4": {
             "ValksorPlugin\\": "src/ValksorPlugin/"
-        }
+        },
+        "exclude-from-classmap": [
+            "src/ValksorPlugin/Tests/"
+        ]
+    },
+    "autoload-dev": {
+        "ValksorPlugin\\Tests\\": "src/ValksorPlugin/Tests/"
     },
     "config": {
         "sort-packages": true,

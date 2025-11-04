@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuites>
+  <testsuite name="" tests="81" assertions="146" errors="0" failures="0" skipped="0" time="0.000000">
+    <testsuite name="ValksorPlugin\Tests\Unit\RecipeHandlerTest" file="/var/www/html/valksor-plugin/src/ValksorPlugin/Tests/Unit/RecipeHandlerTest.php" tests="6" assertions="6" errors="0" failures="0" skipped="0" time="0.000000">
+      <testcase name="testProcessPackageSuccessfulInstallation" class="ValksorPlugin\Tests\Unit\RecipeHandlerTest" classname="ValksorPlugin.Tests.Unit.RecipeHandlerTest" file="/var/www/html/valksor-plugin/src/ValksorPlugin/Tests/Unit/RecipeHandlerTest.php" line="870" assertions="1" time="0.000000"/>
+      <testcase name="testProcessPackageHandlesJsonException" class="ValksorPlugin\Tests\Unit\RecipeHandlerTest" classname="ValksorPlugin.Tests.Unit.RecipeHandlerTest" file="/var/www/html/valksor-plugin/src/ValksorPlugin/Tests/Unit/RecipeHandlerTest.php" line="835" assertions="1" time="0.000000"/>
+      <testcase name="testParseLocalRecipeFilesWithEmptyDirectory" class="ValksorPlugin\Tests\Unit\RecipeHandlerTest" classname="ValksorPlugin.Tests.Unit.RecipeHandlerTest" file="/var/www/html/valksor-plugin/src/ValksorPlugin/Tests/Unit/RecipeHandlerTest.php" line="650" assertions="2" time="0.000000"/>
+      <testcase name="testProcessPackageWithAllowOverride" class="ValksorPlugin\Tests\Unit\RecipeHandlerTest" classname="ValksorPlugin.Tests.Unit.RecipeHandlerTest" file="/var/www/html/valksor-plugin/src/ValksorPlugin/Tests/Unit/RecipeHandlerTest.php" line="902" assertions="0" time="0.000000"/>
+      <testcase name="testProcessPackageWithNoRecipeDirectory" class="ValksorPlugin\Tests\Unit\RecipeHandlerTest" classname="ValksorPlugin.Tests.Unit.RecipeHandlerTest" file="/var/www/html/valksor-plugin/src/ValksorPlugin/Tests/Unit/RecipeHandlerTest.php" line="1086" assertions="1" time="0.000000"/>
+      <testcase name="testProcessPackageWithNoInstallationPath" class="ValksorPlugin\Tests\Unit\RecipeHandlerTest" classname="ValksorPlugin.Tests.Unit.RecipeHandlerTest" file="/var/www/html/valksor-plugin/src/ValksorPlugin/Tests/Unit/RecipeHandlerTest.php" line="1060" assertions="1" time="0.000000"/>
+    </testsuite>
+    <testsuite name="ValksorPlugin\Tests\Unit\ValksorFlexTest" file="/var/www/html/valksor-plugin/src/ValksorPlugin/Tests/Unit/ValksorFlexTest.php" tests="2" assertions="4" errors="0" failures="0" skipped="0" time="0.000000">
+      <testcase name="testGetCommandsReturnsBothCommands" class="ValksorPlugin\Tests\Unit\ValksorFlexTest" classname="ValksorPlugin.Tests.Unit.ValksorFlexTest" file="/var/www/html/valksor-plugin/src/ValksorPlugin/Tests/Unit/ValksorFlexTest.php" line="110" assertions="4" time="0.000000"/>
+      <testcase name="testDeactivateDoesNothing" class="ValksorPlugin\Tests\Unit\ValksorFlexTest" classname="ValksorPlugin.Tests.Unit.ValksorFlexTest" file="/var/www/html/valksor-plugin/src/ValksorPlugin/Tests/Unit/ValksorFlexTest.php" line="64" assertions="0" time="0.000000"/>
+    </testsuite>
+    <testsuite name="ValksorPlugin\Tests\Unit\ValksorRecipesInstallCommandTest" file="/var/www/html/valksor-plugin/src/ValksorPlugin/Tests/Unit/ValksorRecipesInstallCommandTest.php" tests="1" assertions="1" errors="0" failures="0" skipped="0" time="0.000000">
+      <testcase name="testExecuteWithSpecificPackageReturnsSuccessCode" class="ValksorPlugin\Tests\Unit\ValksorRecipesInstallCommandTest" classname="ValksorPlugin.Tests.Unit.ValksorRecipesInstallCommandTest" file="/var/www/html/valksor-plugin/src/ValksorPlugin/Tests/Unit/ValksorRecipesInstallCommandTest.php" line="310" assertions="1" time="0.000000"/>
+    </testsuite>
+    <testsuite name="ValksorPlugin\Tests\Unit\ValksorRecipesUninstallCommandTest" file="/var/www/html/valksor-plugin/src/ValksorPlugin/Tests/Unit/ValksorRecipesUninstallCommandTest.php" tests="2" assertions="4" errors="0" failures="0" skipped="0" time="0.000000">
+      <testcase name="testCommandNameAndDescription" class="ValksorPlugin\Tests\Unit\ValksorRecipesUninstallCommandTest" classname="ValksorPlugin.Tests.Unit.ValksorRecipesUninstallCommandTest" file="/var/www/html/valksor-plugin/src/ValksorPlugin/Tests/Unit/ValksorRecipesUninstallCommandTest.php" line="44" assertions="3" time="0.000000"/>
+      <testcase name="testGetSuccessMessage" class="ValksorPlugin\Tests\Unit\ValksorRecipesUninstallCommandTest" classname="ValksorPlugin.Tests.Unit.ValksorRecipesUninstallCommandTest" file="/var/www/html/valksor-plugin/src/ValksorPlugin/Tests/Unit/ValksorRecipesUninstallCommandTest.php" line="241" assertions="1" time="0.000000"/>
+    </testsuite>
+  </testsuite>
+</testsuites>

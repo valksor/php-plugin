@@ -39,11 +39,6 @@
             "ValksorPlugin\\": "src/ValksorPlugin/"
         }
     },
-    "autoload-dev": {
-        "psr-4": {
-            "ValksorPlugin\\Tests\\": "Tests/"
-        }
-    },
     "config": {
         "sort-packages": true,
         "allow-plugins": {

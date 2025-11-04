@@ -16,7 +16,7 @@
 
     <testsuites>
         <testsuite name="Plugin Tests">
-            <directory>Tests</directory>
+            <directory>src/ValksorPlugin/Tests</directory>
         </testsuite>
     </testsuites>
 
@@ -24,6 +24,22 @@
         <include>
             <directory>src/ValksorPlugin</directory>
         </include>
+        <exclude>
+            <directory>.coverage</directory>
+            <directory>.github</directory>
+            <directory>.phpunit.cache</directory>
+            <directory>core</directory>
+            <directory>src/ValksorPlugin/**/.coverage</directory>
+            <directory>src/ValksorPlugin/**/.github</directory>
+            <directory>src/ValksorPlugin/**/.phpunit.cache</directory>
+            <directory>src/ValksorPlugin/**/Resources</directory>
+            <directory>src/ValksorPlugin/**/Tests</directory>
+            <directory>src/ValksorPlugin/**/docs</directory>
+            <directory>src/ValksorPlugin/**/recipe</directory>
+            <directory>src/ValksorPlugin/**/var</directory>
+            <directory>src/ValksorPlugin/**/vendor</directory>
+            <directory>vendor</directory>
+        </exclude>
     </source>
 
     <coverage

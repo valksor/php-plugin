@@ -13,23 +13,13 @@
 // Set error reporting for tests
 error_reporting(E_ALL);
 
-// Check if we're running through PHPUnit directly
-if (!defined('PHPUNIT_COMPOSER_INSTALL')) {
-    echo "Warning: This file should only be run through PHPUnit.\n";
-    echo "Run: ./vendor/bin/phpunit\n";
+$autoloadPath = __DIR__ . '/../vendor/autoload.php';
 
-    exit(1);
+if (!is_file($autoloadPath)) {
+    throw new RuntimeException('Composer autoload file not found. Run "composer install" first.');
 }
 
-// Ensure we're in the right directory
-$rootDir = dirname(__DIR__);
-
-if (!is_dir($rootDir . '/src')) {
-    throw new LogicException('Source directory not found. Please run this script from the plugin root directory.');
-}
-
-// Include Composer autoloader
-$autoloadPath = $rootDir . '/vendor/autoload.php';
+require $autoloadPath;
 
 if (!file_exists($autoloadPath)) {
     throw new LogicException('Dependencies not installed. Please run "composer install" in the plugin root directory.');

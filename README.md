@@ -1,7 +1,7 @@
 # ValksorPlugin
 
 [![BSD-3-Clause](https://img.shields.io/badge/BSD--3--Clause-green?style=flat)](https://github.com/valksor/php-plugin/blob/master/LICENSE)
-[![codecov](https://codecov.io/gh/valksor/php-plugin/graph/badge.svg?token=4O1QOZUDJW)](https://codecov.io/gh/valksor/php-plugin)
+[![Coverage Status](https://coveralls.io/repos/github/valksor/php-plugin/badge.svg?branch=master)](https://coveralls.io/github/valksor/php-plugin?branch=master)
 
 ⚠️ **IMPORTANT: Composer Plugin Security Requirement**
 

@@ -48,7 +48,7 @@ register_shutdown_function(
     static function (): void {
         // Clean up any temporary test files if needed
         if (is_dir(TEST_TEMP_DIR)) {
-            foreach (glob(TEST_TEMP_DIR . '/*') as $file) {
+            foreach (glob(TEST_TEMP_DIR . '/*', GLOB_NOSORT) as $file) {
                 if (is_file($file)) {
                     unlink($file);
                 }

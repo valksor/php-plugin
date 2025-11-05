@@ -16,7 +16,6 @@ use Composer\Composer;
 use Composer\EventDispatcher\EventDispatcher;
 use Composer\IO\IOInterface;
 use Composer\Plugin\Capability\CommandProvider;
-use JsonException;
 use Mockery;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
@@ -69,7 +68,6 @@ class ValksorFlexTest extends TestCase
     }
 
     /**
-     * @throws JsonException
      * @throws ReflectionException
      */
     public function testDuplicatePackageHandling(): void
@@ -149,9 +147,6 @@ class ValksorFlexTest extends TestCase
         $this->assertSame('onPrePackageUninstall', $events['pre-package-uninstall']);
     }
 
-    /**
-     * @throws JsonException
-     */
     public function testOnPostPackageInstallProcessesAllowedPackage(): void
     {
         $package = ComposerMockFactory::createPackage();
@@ -165,7 +160,6 @@ class ValksorFlexTest extends TestCase
 
     /**
      * @throws ReflectionException
-     * @throws JsonException
      */
     public function testOnPostPackageInstallSkipsDuplicatePackage(): void
     {
@@ -193,7 +187,6 @@ class ValksorFlexTest extends TestCase
 
     /**
      * @throws ReflectionException
-     * @throws JsonException
      */
     public function testOnPostPackageUpdateProcessesUpdatedPackage(): void
     {
@@ -220,7 +213,6 @@ class ValksorFlexTest extends TestCase
      * Test that duplicate uninstall calls for the same package are prevented.
      *
      * @throws ReflectionException
-     * @throws JsonException
      */
     public function testOnPrePackageUninstallPreventsDuplicates(): void
     {
@@ -249,7 +241,6 @@ class ValksorFlexTest extends TestCase
 
     /**
      * @throws ReflectionException
-     * @throws JsonException
      */
     public function testOnPrePackageUninstallRemovesPackage(): void
     {

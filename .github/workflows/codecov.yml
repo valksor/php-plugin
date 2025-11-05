@@ -19,7 +19,7 @@ jobs:
 
             # Upload your existing Clover XML to Coveralls
             -   name: Coveralls
-                uses: coverallsapp/github-action@master
+                uses: coverallsapp/github-action@v2
                 with:
                     github-token: ${{ secrets.GITHUB_TOKEN }}
                     file: .coverage/cobertura.xml

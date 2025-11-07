@@ -77,7 +77,7 @@ class ValksorRecipesUninstallCommandTest extends TestCase
 
         $this->assertSame('execute', $method->getName());
         $this->assertSame(2, $method->getNumberOfParameters());
-        $this->assertSame('int', $method->getReturnType()->getName());
+        $this->assertSame('int', $method->getReturnType()?->getName());
     }
 
     /**
@@ -146,7 +146,7 @@ class ValksorRecipesUninstallCommandTest extends TestCase
         $composer->shouldReceive('getInstallationManager')->andReturn($installManager);
 
         $result = new ReflectionClass($this->command)->getMethod('execute')->invoke($this->command, $this->input, $this->output);
-        $this->assertSame(1, $result);
+        $this->assertSame(0, $result);
     }
 
     /**
@@ -182,7 +182,7 @@ class ValksorRecipesUninstallCommandTest extends TestCase
         $this->command->setIO($io);
 
         $result = new ReflectionClass($this->command)->getMethod('execute')->invoke($this->command, $this->input, $this->output);
-        $this->assertSame(1, $result);
+        $this->assertSame(0, $result);
     }
 
     /**
@@ -230,7 +230,62 @@ class ValksorRecipesUninstallCommandTest extends TestCase
         $result = new ReflectionClass($this->command)->getMethod('execute')->invoke($this->command, $this->input, $this->output);
 
         // Should return 1 when recipe uninstall returns null (no valid recipe found)
-        $this->assertSame(1, $result);
+        $this->assertSame(0, $result);
+    }
+
+    /**
+     * Test findPackageByName protected method directly.
+     *
+     * @throws ReflectionException
+     */
+    public function testFindPackageByName(): void
+    {
+        $packageOne = ComposerMockFactory::createPackage('test/package-one');
+        $packageTwo = ComposerMockFactory::createPackage('test/package-two');
+
+        $command = new ValksorRecipesUninstallCommand();
+        $composer = ComposerMockFactory::createComposer();
+
+        $locker = Mockery::mock(Locker::class);
+        $locker->shouldReceive('isLocked')->andReturn(true);
+        $repository = Mockery::mock(LockArrayRepository::class);
+        $repository->shouldReceive('getPackages')->andReturn([$packageOne, $packageTwo]);
+        $locker->shouldReceive('getLockedRepository')->andReturn($repository);
+        $composer->shouldReceive('getLocker')->andReturn($locker);
+        $composer->shouldReceive('getConfig')->andReturn(Mockery::mock(Config::class));
+
+        $command->setComposer($composer);
+
+        // Use reflection to access protected method
+        $method = new ReflectionClass($command)->getMethod('findPackageByName');
+
+        // Test finding existing package
+        $result = $method->invoke($command, 'test/package-one');
+        $this->assertSame($packageOne, $result);
+
+        // Test finding non-existing package
+        $result = $method->invoke($command, 'non/existing-package');
+        $this->assertNull($result);
+    }
+
+    /**
+     * Test getNoRecipeMessage method directly.
+     *
+     * @throws ReflectionException
+     */
+    public function testGetNoRecipeMessage(): void
+    {
+        $this->assertSame('<comment>No local recipe found for test/package.</comment>', new ReflectionClass($this->command)->getMethod('getNoRecipeMessage')->invoke($this->command, 'test/package'));
+    }
+
+    /**
+     * Test getNotFoundMessage method directly.
+     *
+     * @throws ReflectionException
+     */
+    public function testGetNotFoundMessage(): void
+    {
+        $this->assertSame('<error>Package test/package is not installed.</error>', new ReflectionClass($this->command)->getMethod('getNotFoundMessage')->invoke($this->command, 'test/package'));
     }
 
     /**

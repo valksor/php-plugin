@@ -25,8 +25,8 @@ use Composer\Package\CompletePackage;
 use Composer\Package\Locker;
 use Composer\Package\PackageInterface;
 use Composer\Package\RootPackageInterface;
+use Composer\Repository\LockArrayRepository;
 use Composer\Repository\RepositoryInterface;
-use Composer\Repository\WritableRepositoryInterface;
 use Mockery;
 
 /**
@@ -125,7 +125,7 @@ class ComposerMockFactory
         $locker = Mockery::mock(Locker::class);
         $locker->shouldReceive('isLocked')->andReturn($isLocked);
 
-        $repository = Mockery::mock(WritableRepositoryInterface::class);
+        $repository = Mockery::mock(LockArrayRepository::class);
         $repository->shouldReceive('getPackages')->andReturn($packages);
 
         $locker->shouldReceive('getLockedRepository')->andReturn($repository);

@@ -13,11 +13,11 @@
 namespace ValksorPlugin\Command;
 
 use Composer\Package\PackageInterface;
+use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Flex\Recipe;
-use ValksorPlugin\RecipeHandler;
 
 use function sprintf;
 
@@ -30,6 +30,42 @@ use function sprintf;
  */
 class ValksorRecipesUninstallCommand extends AbstractValksorRecipeCommand
 {
+    /**
+     * {@inheritdoc}
+     *
+     * Returns a success message indicating that the local recipe was successfully removed.
+     * This message is displayed when the RecipeHandler successfully finds and
+     * uninstalls the package's local recipe, cleaning up all configuration files
+     * and environment variables.
+     */
+    public function getSuccessMessage(
+        string $packageName,
+    ): string {
+        return sprintf('<info>Successfully removed local recipe for %s.</info>', $packageName);
+    }
+
+    /**
+     * {@inheritdoc}
+     *
+     * Processes a package for recipe uninstallation.
+     *
+     * This method delegates to the RecipeHandler's uninstallPackage method,
+     * which handles the complete cleanup of recipe-applied changes including:
+     * - Removal of configuration files
+     * - Cleanup of environment variables
+     * - Restoration of original files (when applicable)
+     * - Updates to symfony.lock file
+     *
+     * @param PackageInterface $package The package to uninstall the recipe for
+     *
+     * @return Recipe|null The uninstalled recipe, or null if no recipe was found/processed
+     */
+    public function processPackage(
+        PackageInterface $package,
+    ): ?Recipe {
+        return $this->getHandler()->uninstallPackage($package);
+    }
+
     /**
      * Configure the command definition.
      *
@@ -60,82 +96,16 @@ class ValksorRecipesUninstallCommand extends AbstractValksorRecipeCommand
         InputInterface $input,
         OutputInterface $output,
     ): int {
-        [$composer, $io] = $this->setupComposerAndIO();
-
         $packageName = $input->getArgument('package');
-        $io->writeError(sprintf('<info>Searching for local recipe to remove for %s...</info>', $packageName));
+        $this->getIO()->writeError(sprintf('<info>Searching for local recipe to remove for %s...</info>', $packageName));
 
         // Validate lock file
-        $lockValidation = $this->validateLockFile($composer, $io);
+        $lockValidation = $this->validateLockFile();
 
-        if (1 === $lockValidation) {
-            return 1;
+        if (Command::FAILURE === $lockValidation) {
+            return Command::FAILURE;
         }
 
-        return $this->processSpecificPackage($composer, $io, $packageName);
-    }
-
-    /**
-     * {@inheritdoc}
-     *
-     * Returns a message indicating that no local recipe was found for the package.
-     * This message is displayed when the package exists but has no recipe/manifest.json
-     * in its installation directory, so there's nothing to uninstall.
-     */
-    protected function getNoRecipeMessage(
-        string $packageName,
-    ): string {
-        return sprintf('<comment>No local recipe found for %s.</comment>', $packageName);
-    }
-
-    /**
-     * {@inheritdoc}
-     *
-     * Returns an error message indicating that the requested package is not installed.
-     * This message is displayed when the package name provided by the user does not
-     * exist in the composer.lock file, so no recipe can be uninstalled.
-     */
-    protected function getNotFoundMessage(
-        string $packageName,
-    ): string {
-        return sprintf('<error>Package %s is not installed.</error>', $packageName);
-    }
-
-    /**
-     * {@inheritdoc}
-     *
-     * Returns a success message indicating that the local recipe was successfully removed.
-     * This message is displayed when the RecipeHandler successfully finds and
-     * uninstalls the package's local recipe, cleaning up all configuration files
-     * and environment variables.
-     */
-    protected function getSuccessMessage(
-        string $packageName,
-    ): string {
-        return sprintf('<info>Successfully removed local recipe for %s.</info>', $packageName);
-    }
-
-    /**
-     * {@inheritdoc}
-     *
-     * Processes a package for recipe uninstallation.
-     *
-     * This method delegates to the RecipeHandler's uninstallPackage method,
-     * which handles the complete cleanup of recipe-applied changes including:
-     * - Removal of configuration files
-     * - Cleanup of environment variables
-     * - Restoration of original files (when applicable)
-     * - Updates to symfony.lock file
-     *
-     * @param RecipeHandler    $handler The RecipeHandler instance to use
-     * @param PackageInterface $package The package to uninstall the recipe for
-     *
-     * @return Recipe|null The uninstalled recipe, or null if no recipe was found/processed
-     */
-    protected function processPackage(
-        RecipeHandler $handler,
-        PackageInterface $package,
-    ): ?Recipe {
-        return $handler->uninstallPackage($package);
+        return $this->processSpecificPackage($packageName);
     }
 }

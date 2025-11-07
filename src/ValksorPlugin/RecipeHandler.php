@@ -324,15 +324,8 @@ class RecipeHandler
         bool $allowOverride,
     ): void {
         if (!$allowOverride) {
-            // Manual install behavior: More aggressive approach is acceptable
-            // because the user explicitly initiated this operation.
-            // This differs from automatic Composer operations where we need
-            // to be more cautious about overwriting existing files.
             $this->io->writeError(sprintf('  - Applying local recipe for <info>%s</info>', $packageName));
         } else {
-            // Override enabled: Allow recipe to overwrite existing files
-            // This is useful for development environments where frequent
-            // recipe updates are expected and manual intervention is acceptable.
             $this->io->writeError(sprintf('  - Applying local recipe for <info>%s</info> (override enabled)', $packageName));
         }
     }

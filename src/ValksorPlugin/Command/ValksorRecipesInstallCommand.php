@@ -31,40 +31,15 @@ use function sprintf;
  */
 class ValksorRecipesInstallCommand extends AbstractValksorRecipeCommand
 {
-    /**
-     * {@inheritdoc}
-     *
-     * Returns a success message indicating that the local recipe was successfully applied.
-     * This message is displayed when the RecipeHandler successfully processes and
-     * installs the package's local recipe.
-     */
     public function getSuccessMessage(
         string $packageName,
     ): string {
         return sprintf('<info>Successfully applied local recipe for %s.</info>', $packageName);
     }
 
-    /**
-     * {@inheritdoc}
-     *
-     * Processes a package for recipe installation using the 'update' operation.
-     *
-     * We use 'update' instead of 'install' as the operation type because:
-     * 1. It's safer for re-applying recipes (handles existing configurations gracefully)
-     * 2. It allows the recipe to update files that may already exist
-     * 3. It provides better error handling for partially applied recipes
-     *
-     * This approach ensures that manual recipe application behaves consistently
-     * with automatic recipe updates during composer operations.
-     *
-     * @param PackageInterface $package The package to process the recipe for
-     *
-     * @return Recipe|null The applied recipe, or null if no recipe was found/processed
-     */
     public function processPackage(
         PackageInterface $package,
     ): ?Recipe {
-        // We use 'update' as the operation, as it's a safe default for re-applying a recipe.
         return $this->getHandler()->processPackage($package, 'update');
     }
 

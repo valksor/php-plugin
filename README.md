@@ -1,221 +1,21 @@
-# ValksorPlugin
+# Valksor PHP Plugin
 
 [![BSD-3-Clause](https://img.shields.io/badge/BSD--3--Clause-green?style=flat)](https://github.com/valksor/php-plugin/blob/master/LICENSE)
 [![Coverage Status](https://coveralls.io/repos/github/valksor/php-plugin/badge.svg?branch=master)](https://coveralls.io/github/valksor/php-plugin?branch=master)
 
-⚠️ **IMPORTANT: Composer Plugin Security Requirement**
+A Composer plugin that provides automatic recipe processing for PHP packages, similar to [Symfony Flex](https://symfony.com/doc/current/components/flex.html). It automatically discovers and applies local recipes from package directories when packages are installed, updated, or uninstalled. This plugin is part of the Valksor ecosystem and enables seamless package configuration management for PHP applications.
 
-Starting with Composer 2.2+, you **must explicitly allow** this plugin in your `composer.json` for it to work. Without this configuration, the plugin will be blocked and recipes will not be processed.
-
-```bash
-# Allow this plugin using CLI command
-composer config allow-plugins.valksor/php-plugin true
-
-# OR manually add to composer.json:
-{
-    "config": {
-        "allow-plugins": {
-            "valksor/php-plugin": true
-        }
-    }
-}
-```
-
----
-
-ValksorPlugin is a Composer plugin that provides automatic recipe processing for PHP packages, similar to [Symfony Flex](https://symfony.com/doc/current/components/flex.html). It automatically discovers and applies local recipes from package directories when packages are installed, updated, or uninstalled.
+⚠️ **Composer 2.2+ Security Requirement**: You must explicitly allow this plugin in your `composer.json` for it to work.
 
 ## Installation
 
-### Step 1: Install the Plugin
-
 ```bash
 composer require valksor/php-plugin
-```
-
-### Step 2: Allow the Plugin (Required for Composer 2.2+)
-
-⚠️ **This step is mandatory** - the plugin will not work without it.
-
-#### Option A: Using CLI Commands (Recommended)
-
-```bash
-# Allow the plugin
 composer config allow-plugins.valksor/php-plugin true
-
-# Verify the plugin is allowed
-composer config allow-plugins
 ```
 
-#### Option B: Manual Configuration
+Add to `composer.json`:
 
-Edit your `composer.json` and add the plugin to the `allow-plugins` section:
-
-```json
-{
-    "config": {
-        "allow-plugins": {
-            "valksor/php-plugin": true
-        }
-    }
-}
-```
-
-### Step 3: Configure Plugin Behavior (Optional)
-
-Add plugin configuration to your `composer.json`:
-
-```json
-{
-    "extra": {
-        "valksor": {
-            "allow": "*"
-        }
-    }
-}
-```
-
-### Step 4: Verify Installation
-
-```bash
-# Check that the plugin is properly loaded
-composer show valksor/php-plugin
-
-# Verify plugin permissions are set
-composer config allow-plugins | grep valksor
-```
-
-The plugin is now ready to automatically process recipes when you install packages!
-
-## Plugin Management CLI Commands
-
-### Composer Plugin Commands
-
-These commands help you manage the plugin permissions and status:
-
-```bash
-# Allow the plugin (most common command)
-composer config allow-plugins.valksor/php-plugin true
-
-# Check current plugin permissions
-composer config allow-plugins
-
-# Allow all plugins (use with caution)
-composer config allow-plugins true
-
-# Remove plugin permission
-composer config allow-plugins.valksor/php-plugin --unset
-```
-
-### Plugin Status and Debugging
-
-```bash
-# Show plugin details
-composer show valksor/php-plugin
-
-# Check if plugin is installed and allowed
-composer show | grep valksor
-composer config allow-plugins | grep valksor
-
-# List all available composer commands (helps verify plugin commands are loaded)
-composer list | grep valksor
-```
-
-### Batch Plugin Management
-
-```bash
-# Allow multiple common plugins at once
-composer config allow-plugins.symfony/flex true
-composer config allow-plugins.valksor/php-plugin true
-
-# Check all currently allowed plugins
-composer config allow-plugins
-```
-
-## How It Works
-
-ValksorPlugin hooks into Composer's event system to automatically process recipes when packages are installed, updated, or removed:
-
-1. **Automatic Discovery**: When a package is installed/updated, the plugin searches for a `recipe/` directory in the package
-2. **Recipe Processing**: If `recipe/manifest.json` is found, the recipe is applied using Symfony Flex's configurator system
-3. **Lock File Management**: Recipes are tracked in `symfony.lock` for proper uninstallation
-
-### Composer Events Hooked
-
-- `post-package-install` - Applies recipes after package installation
-- `post-package-update` - Re-applies recipes after package updates
-- `pre-package-uninstall` - Removes recipes before package uninstallation
-
-## Configuration
-
-Complete plugin configuration requires both security permissions and behavior settings:
-
-### Complete Configuration Example
-
-```json
-{
-    "config": {
-        "allow-plugins": {
-            "valksor/php-plugin": true,
-            "symfony/flex": true
-        }
-    },
-    "extra": {
-        "valksor": {
-            "allow": "*"
-        }
-    }
-}
-```
-
-### Security Configuration (Required)
-
-```json
-{
-    "config": {
-        "allow-plugins": {
-            "valksor/php-plugin": true
-        }
-    }
-}
-```
-
-**⚠️ Important**: The `config.allow-plugins` section is **required** for Composer 2.2+. Without this, the plugin will be blocked.
-
-### Plugin Behavior Configuration
-
-```json
-{
-    "extra": {
-        "valksor": {
-            "allow": {
-                "*": true,
-                "vendor/package": {
-                    "allow_override": true
-                }
-            }
-        }
-    }
-}
-```
-
-### Configuration Options
-
-#### Security Settings (`config.allow-plugins`)
-
-- **`"valksor/php-plugin": true`** - Allows this specific plugin to run
-- **`"*": true`** - Allows all plugins (use with caution)
-- **`"symfony/flex": true`** - Also allow Symfony Flex (recommended for compatibility)
-
-#### Plugin Behavior (`extra.valksor.allow`)
-
-- **`"*": true`** - Allow all packages to have recipes processed (wildcard)
-- **`"vendor/package": {}`** - Allow only specific package recipes
-- **`"vendor/package": {"allow_override": true}`** - Allow recipe overrides for specific package
-
-### Configuration Examples
-
-#### Minimal (Permissive) Configuration
 ```json
 {
     "config": {
@@ -231,49 +31,21 @@ Complete plugin configuration requires both security permissions and behavior se
 }
 ```
 
-#### Restricted Configuration
-```json
-{
-    "config": {
-        "allow-plugins": {
-            "valksor/php-plugin": true
-        }
-    },
-    "extra": {
-        "valksor": {
-            "allow": {
-                "my-vendor/my-package": {},
-                "trusted-vendor/another-package": {
-                    "allow_override": true
-                }
-            }
-        }
-    }
-}
-```
+## Features
 
-#### Development Environment
-```json
-{
-    "config": {
-        "allow-plugins": {
-            "valksor/php-plugin": true,
-            "symfony/flex": true
-        }
-    },
-    "extra": {
-        "valksor": {
-            "allow": "*"
-        }
-    }
-}
-```
+- **Automatic Recipe Discovery**: Automatically finds and processes local recipes in package directories during Composer operations
+- **Symfony Flex Compatibility**: Built on top of Symfony Flex's configurator system with full recipe format compatibility
+- **Event-Driven Processing**: Hooks into Composer's package lifecycle events (install, update, uninstall) for seamless automation
+- **Local Recipe Focus**: Specifically designed for local recipe discovery within package directories
+- **Manual Recipe Management**: Provides commands for manual recipe installation and removal when needed
+- **Configuration Flexibility**: Supports both wildcard and package-specific recipe permissions
+- **Lock File Integration**: Uses Symfony Flex's symfony.lock file for proper recipe tracking and cleanup
+- **Duplicate Prevention**: Intelligent handling of package aliases to prevent duplicate processing
+- **Override Support**: Configurable recipe override capabilities for development environments
 
-## Available Commands
+## Usage
 
-### valksor:install
-
-Manually install recipes for all or specific packages:
+The plugin automatically processes recipes when packages are installed. For manual control:
 
 ```bash
 # Install recipes for all packages
@@ -281,23 +53,43 @@ composer valksor:install
 
 # Install recipe for specific package
 composer valksor:install vendor/package
-```
 
-### valksor:uninstall
-
-Remove recipes for a specific package:
-
-```bash
+# Remove recipe for specific package
 composer valksor:uninstall vendor/package
 ```
 
+## Configuration
+
+### Complete Configuration
+
+```json
+{
+    "config": {
+        "allow-plugins": {
+            "valksor/php-plugin": true,
+            "symfony/flex": true
+        }
+    },
+    "extra": {
+        "valksor": {
+            "allow": "*"
+        }
+    }
+}
+```
+
+### Configuration Options
+
+- **`config.allow-plugins.valksor/php-plugin: true`** - Required for Composer 2.2+
+- **`extra.valksor.allow: "*"`** - Allow all packages to have recipes processed
+- **`extra.valksor.allow: {"vendor/package": {}}`** - Allow only specific packages
+- **`extra.valksor.allow: {"vendor/package": {"allow_override": true}}`** - Allow recipe overrides
+
 ## Recipe Format
 
-ValksorPlugin uses the same recipe format as Symfony Flex. For complete recipe documentation, see the [Symfony Flex Recipe Documentation](https://symfony.com/doc/current/components/flex/recipes.html).
+Uses the same recipe format as Symfony Flex. See [Symfony Flex Recipe Documentation](https://symfony.com/doc/current/components/flex/recipes.html).
 
-### Basic Recipe Structure
-
-Recipes are stored in a `recipe/` directory within packages:
+### Basic Structure
 
 ```
 vendor/package/
@@ -306,7 +98,6 @@ vendor/package/
         config/
             packages.yaml
         public/
-            css/
         src/
 ```
 
@@ -326,170 +117,172 @@ vendor/package/
 }
 ```
 
-### Recipe Files
+## Advanced Usage
 
-- **`manifest.json`**: Recipe configuration defining what to install
-- **Configuration files**: YAML, PHP, or other config files
-- **Templates**: Files to be copied to the project
+### Selective Recipe Processing
 
-## Examples
+Configure which packages are allowed to have recipes processed:
 
-### Package with Recipe
-
-A package containing a recipe:
-
-```
-my-cool-package/
-    composer.json
-    src/
-        Service.php
-    recipe/
-        manifest.json
-            config/
-                my_config.yaml
-```
-
-**recipe/manifest.json**:
 ```json
 {
-    "copy-from-recipe": {
-        "config/": "%CONFIG_DIR%/"
+    "extra": {
+        "valksor": {
+            "allow": {
+                "my-vendor/core-package": {},
+                "my-vendor/optional-package": {
+                    "allow_override": true
+                },
+                "external-vendor/package": {}
+            }
+        }
     }
 }
 ```
 
-When this package is installed:
+### Development Environment with Overrides
 
-```bash
-composer require my-cool-package
+Enable recipe overrides for frequent development updates:
+
+```json
+{
+    "extra": {
+        "valksor": {
+            "allow": {
+                "my-vendor/dev-package": {
+                    "allow_override": true
+                }
+            }
+        }
+    }
+}
 ```
 
-The plugin will automatically:
-1. Discover the recipe in `recipe/manifest.json`
-2. Copy `config/my_config.yaml` to your project's config directory
-3. Update `symfony.lock` with recipe information
+### Custom Recipe Development
 
-### Manual Recipe Installation
+Create recipes for your packages following this structure:
 
-If a package was installed before the plugin:
-
-```bash
-composer valksor:install my-cool-package
+```
+your-package/
+    composer.json
+    src/
+        YourCode.php
+    recipe/
+        manifest.json
+        config/
+            packages.yaml
+        templates/
+            some_template.php.twig
 ```
 
-### Recipe Removal
-
-```bash
-composer valksor:uninstall my-cool-package
+**manifest.json with multiple features**:
+```json
+{
+    "bundles": {
+        "YourVendor\\YourBundle\\YourBundle": ["all"]
+    },
+    "copy-from-recipe": {
+        "config/": "%CONFIG_DIR%/",
+        "templates/": "%TEMPLATES_DIR%/"
+    },
+    "env": {
+        "YOUR_SERVICE_URL": "https://api.example.com",
+        "YOUR_API_KEY": "your-api-key-here"
+    },
+    "post-install-output": [
+        "  <info>✓ Your package has been configured</info>",
+        "  <info>  Update your .env file with the API key</info>"
+    ]
+}
 ```
 
 ## Troubleshooting
 
-### Plugin Permission Issues
-
-**Problem**: Plugin is blocked or recipes are not being processed.
-
-**Solution**: Ensure the plugin is properly allowed:
-
-```bash
-# Check if plugin is allowed
-composer config allow-plugins | grep valksor
-
-# If not found, allow the plugin
-composer config allow-plugins.valksor/php-plugin true
-
-# Verify plugin is installed
-composer show valksor/php-plugin
-```
-
-**Common Error Messages**:
-- `"valksor/php-plugin" has been blocked from running` - Plugin needs to be allowed
-- `Plugin "valksor/php-plugin" could not be found` - Plugin not properly installed
-
-### Recipes Not Processing
-
-**Problem**: Packages with recipes are installed but recipes are not applied.
-
-**Solutions**:
-
-1. **Check Plugin Permissions**:
-   ```bash
-   composer config allow-plugins
-   ```
-
-2. **Verify Plugin Configuration**:
-   ```bash
-   # Check valksor configuration in composer.json
-   cat composer.json | jq '.extra.valksor'
-   ```
-
-3. **Manually Process Recipes**:
-   ```bash
-   composer valksor:install vendor/package
-   ```
-
-4. **Check for Recipe Directory**:
-   ```bash
-   # Verify package has recipe directory
-   find vendor/package -name "recipe" -type d
-   find vendor/package/recipe -name "manifest.json"
-   ```
+| Issue                  | Cause                                | Solution                                                           |
+|------------------------|--------------------------------------|--------------------------------------------------------------------|
+| Plugin blocked         | Composer 2.2+ security feature       | `composer config allow-plugins.valksor/php-plugin true`            |
+| Recipes not processing | Plugin not allowed or not configured | Check `composer config allow-plugins` and `extra.valksor` settings |
+| Recipe not found       | Package has no recipe directory      | Contact package maintainer or create custom recipe                 |
 
 ### Debug Commands
 
 ```bash
 # Check plugin status
 composer show valksor/php-plugin
-
-# Verify plugin commands are available
+composer config allow-plugins | grep valksor
 composer list | grep valksor
 
-# Check symfony.lock for recipe tracking
-ls -la symfony.lock
-cat symfony.lock | jq '."vendor/package"'
-
-# Test plugin manually
-composer valksor:install --help
+# Manual recipe processing
+composer valksor:install vendor/package
 ```
 
-### Common Issues and Solutions
+## Contributing
 
-| Issue                         | Cause                                 | Solution                                                                     |
-|-------------------------------|---------------------------------------|------------------------------------------------------------------------------|
-| Plugin blocked by Composer    | Security feature in Composer 2.2+     | `composer config allow-plugins.valksor/php-plugin true`                      |
-| Recipes not found             | Package doesn't have recipe directory | Contact package maintainer or create custom recipe                           |
-| Manual recipe install fails   | Package not installed or wrong name   | Use correct vendor/package format: `composer valksor:install vendor/package` |
-| Recipe uninstall doesn't work | Recipe not tracked in symfony.lock    | Ensure recipe was properly installed first                                   |
+Contributions are welcome! Please follow these guidelines:
 
-### Getting Help
+### Development Setup
 
-```bash
-# Show plugin version and info
-composer show valksor/php-plugin
+1. **Clone the repository**:
+   ```bash
+   git clone https://github.com/valksor/php-plugin.git
+   cd php-plugin
+   ```
 
-# Check available commands
-composer list | grep valksor
+2. **Install dependencies**:
+   ```bash
+   composer install
+   ```
 
-# Get help for specific commands
-composer valksor:install --help
-composer valksor:uninstall --help
-```
+3. **Run tests**:
+   ```bash
+   vendor/bin/phpunit
+   ```
 
-## Integration with Symfony Flex
+### Pull Request Guidelines
 
-ValksorPlugin is built on top of Symfony Flex and:
+- **PSR-12 Coding Standards**: Ensure code follows PSR-12 standards
+- **Tests**: Include tests for new features
+- **Documentation**: Update README and docblocks as needed
+- **Commits**: Use clear, descriptive commit messages
+- **Branching**: Create feature branches from `master`
 
-- Uses Symfony Flex's configurator system for recipe processing
-- Maintains compatibility with existing Symfony recipes
-- Uses the same `symfony.lock` file format
-- Supports all Symfony Flex recipe features
+### Code Quality
+
+All code must pass:
+- **PHPUnit tests** with 100% coverage where possible
+- **PHP-CS-Fixer** code style checks (config file can be found in [valksor-dev](https://github.com/valksor/php-dev))
+
+### Reporting Issues
+
+Please use [GitHub Issues](https://github.com/valksor/php-plugin/issues) to report bugs or request features. Include:
+- PHP and Composer versions
+- Steps to reproduce
+- Expected vs actual behavior
+- Example configuration if applicable
+
+## Security
+
+If you discover a security vulnerability, please send an email to packages@valksor.com instead of using the issue tracker. All security vulnerabilities will be promptly addressed.
+
+## Support & Community
+
+- **GitHub Issues**: [Bug reports and feature requests](https://github.com/valksor/php-plugin/issues)
+- **GitHub Discussions**: [Community discussions and Q&A](https://github.com/valksor/discussions)
+- **Symfony Flex Documentation**: [Official Recipe Documentation](https://symfony.com/doc/current/components/flex/recipes.html)
+
+## Credits
+
+- **Original Author**: [Davis Zalitis (k0d3r1s)](https://github.com/k0d3r1s)
+- **Maintainer**: [SIA Valksor](https://valksor.com)
+- **All Contributors**: [Contributors list](https://github.com/valksor/php-plugin/graphs/contributors)
+
+This plugin is inspired by and built upon [Symfony Flex](https://symfony.com/doc/current/components/flex.html), providing enhanced local recipe discovery capabilities for the Valksor ecosystem.
 
 ## Requirements
 
-- PHP 8.4 or higher
-- Composer 2.0 or higher
-- Symfony Flex (as dependency)
+- **PHP 8.4 or higher**
+- **Composer 2.0 or higher**
+- **Symfony Flex** (as dependency)
 
 ## License
 
-This package is part of the Valksor package. See the LICENSE file for copyright information.
+This package is part of the Valksor package. See the [LICENSE](LICENSE) file for copyright information.

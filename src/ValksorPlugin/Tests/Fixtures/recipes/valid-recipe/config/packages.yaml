@@ -1,7 +1,7 @@
 # Test configuration file
 parameters:
-    app.name: 'Test Application'
-    app.version: '1.0.0'
+    app.name: "Test Application"
+    app.version: "1.0.0"
 
 services:
     _defaults:
@@ -10,4 +10,4 @@ services:
 
     App\Service\TestService:
         arguments:
-            $name: '%app.name%'
+            $name: "%app.name%"

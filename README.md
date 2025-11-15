@@ -175,6 +175,7 @@ your-package/
 ```
 
 **manifest.json with multiple features**:
+
 ```json
 {
     "bundles": {
@@ -198,7 +199,7 @@ your-package/
 ## Troubleshooting
 
 | Issue                  | Cause                                | Solution                                                           |
-|------------------------|--------------------------------------|--------------------------------------------------------------------|
+| ---------------------- | ------------------------------------ | ------------------------------------------------------------------ |
 | Plugin blocked         | Composer 2.2+ security feature       | `composer config allow-plugins.valksor/php-plugin true`            |
 | Recipes not processing | Plugin not allowed or not configured | Check `composer config allow-plugins` and `extra.valksor` settings |
 | Recipe not found       | Package has no recipe directory      | Contact package maintainer or create custom recipe                 |
@@ -222,20 +223,22 @@ Contributions are welcome! Please follow these guidelines:
 ### Development Setup
 
 1. **Clone the repository**:
-   ```bash
-   git clone https://github.com/valksor/php-plugin.git
-   cd php-plugin
-   ```
+
+    ```bash
+    git clone https://github.com/valksor/php-plugin.git
+    cd php-plugin
+    ```
 
 2. **Install dependencies**:
-   ```bash
-   composer install
-   ```
+
+    ```bash
+    composer install
+    ```
 
 3. **Run tests**:
-   ```bash
-   vendor/bin/phpunit
-   ```
+    ```bash
+    vendor/bin/phpunit
+    ```
 
 ### Pull Request Guidelines
 
@@ -248,12 +251,14 @@ Contributions are welcome! Please follow these guidelines:
 ### Code Quality
 
 All code must pass:
+
 - **PHPUnit tests** with 100% coverage where possible
 - **PHP-CS-Fixer** code style checks (config file can be found in [valksor-dev](https://github.com/valksor/php-dev))
 
 ### Reporting Issues
 
 Please use [GitHub Issues](https://github.com/valksor/php-plugin/issues) to report bugs or request features. Include:
+
 - PHP and Composer versions
 - Steps to reproduce
 - Expected vs actual behavior

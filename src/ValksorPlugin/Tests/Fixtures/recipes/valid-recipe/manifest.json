@@ -10,14 +10,9 @@
         "DATABASE_URL": "mysql://user:pass@127.0.0.1:3306/db_name",
         "APP_ENV": "dev"
     },
-    "gitignore": [
-        "/var/cache/",
-        "/var/log/"
-    ],
+    "gitignore": ["/var/cache/", "/var/log/"],
     "composer-scripts": {
-        "post-install-cmd": [
-            "@auto-scripts"
-        ],
+        "post-install-cmd": ["@auto-scripts"],
         "auto-scripts": {
             "cache:clear": "symfony-cmd",
             "assets:install %PUBLIC_DIR%": "symfony-cmd"

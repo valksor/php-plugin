@@ -2,7 +2,8 @@
 
 [![valksor](https://badgen.net/static/org/valksor/green)](https://github.com/valksor) 
 [![BSD-3-Clause](https://img.shields.io/badge/BSD--3--Clause-green?style=flat)](https://github.com/valksor/php-plugin/blob/master/LICENSE)
-[![Coverage Status](https://coveralls.io/repos/github/valksor/php-plugin/badge.svg?branch=master)](https://coveralls.io/github/valksor/php-plugin?branch=master)
+[![Coverage Status](https://coveralls.io/repos/github/valksor/php-plugin/badge.svg?branch=master)](https://coveralls.io/github/valksor/php-plugin?branch=master) 
+[![php](https://badgen.net/static/php/>=8.4/purple)](https://www.php.net/releases/8.4/en.php)
 
 A Composer plugin that provides automatic recipe processing for PHP packages, similar to [Symfony Flex](https://symfony.com/doc/current/components/flex.html). It automatically discovers and applies local recipes from package directories when packages are installed, updated, or uninstalled. This plugin is part of the Valksor ecosystem and enables seamless package configuration management for PHP applications.
 

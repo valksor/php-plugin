@@ -201,7 +201,7 @@ your-package/
 ## Troubleshooting
 
 | Issue                  | Cause                                | Solution                                                           |
-| ---------------------- | ------------------------------------ | ------------------------------------------------------------------ |
+|------------------------|--------------------------------------|--------------------------------------------------------------------|
 | Plugin blocked         | Composer 2.2+ security feature       | `composer config allow-plugins.valksor/php-plugin true`            |
 | Recipes not processing | Plugin not allowed or not configured | Check `composer config allow-plugins` and `extra.valksor` settings |
 | Recipe not found       | Package has no recipe directory      | Contact package maintainer or create custom recipe                 |

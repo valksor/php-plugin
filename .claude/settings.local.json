@@ -1,9 +1,0 @@
-{
-    "enabledMcpjsonServers": [
-        "context7",
-        "sequential-thinking",
-        "mcp-compass",
-        "docker-mcp",
-        "playwright"
-    ]
-}

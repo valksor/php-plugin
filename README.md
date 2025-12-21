@@ -270,11 +270,11 @@ Please use [GitHub Issues](https://github.com/valksor/php-plugin/issues) to repo
 
 If you discover a security vulnerability, please send an email to packages@valksor.com instead of using the issue tracker. All security vulnerabilities will be promptly addressed.
 
-## Support & Community
+## Support
 
-- **GitHub Issues**: [Bug reports and feature requests](https://github.com/valksor/php-plugin/issues)
-- **GitHub Discussions**: [Community discussions and Q&A](https://github.com/valksor/discussions)
-- **Symfony Flex Documentation**: [Official Recipe Documentation](https://symfony.com/doc/current/components/flex/recipes.html)
+- **Documentation**: [Full documentation](https://github.com/valksor/php-plugin)
+- **Issues**: [GitHub Issues](https://github.com/valksor/php-plugin/issues) for bug reports and feature requests
+- **Discussions**: [GitHub Discussions](https://github.com/orgs/valksor/discussions/categories/php-plugin) for questions and community support
 
 ## Credits
 

@@ -1,0 +1,11 @@
+name = "valksor-php-plugin-docs"
+main = "workers-site/index.min.js"
+compatibility_date = "2026-01-03"
+compatibility_flags = ["nodejs_compat"]
+
+routes = [
+    { pattern = "plugin.valksor.com/docs/*", zone_name = "valksor.com" }
+]
+
+[site]
+bucket = "."

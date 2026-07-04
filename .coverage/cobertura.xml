@@ -1,5 +1,4 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!DOCTYPE coverage SYSTEM "http://cobertura.sourceforge.net/xml/coverage-04.dtd">
 <coverage line-rate="1" branch-rate="0" lines-covered="189" lines-valid="189" branches-covered="0" branches-valid="0" complexity="67" version="0.4" timestamp="0">
   <sources>
     <source>/var/www/html/valksor-plugin/src/ValksorPlugin</source>

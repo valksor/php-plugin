@@ -27,20 +27,19 @@ use Composer\Package\PackageInterface;
 use Composer\Package\RootPackageInterface;
 use Composer\Repository\LockArrayRepository;
 use Composer\Repository\RepositoryInterface;
-use Mockery;
 
 /**
- * Factory for creating Composer-related mocks.
+ * Trait for creating Composer-related test doubles.
  *
- * This factory provides standardized mocks for Composer components
+ * This trait provides standardized stubs for Composer components
  * used throughout the test suite.
  */
-class ComposerMockFactory
+trait ComposerMockTrait
 {
     /**
      * Create a mock complete package.
      */
-    public static function createCompletePackage(
+    public function createCompletePackage(
         string $name = 'test/package',
         string $version = '1.0.0',
     ): CompletePackage {
@@ -51,175 +50,168 @@ class ComposerMockFactory
     }
 
     /**
-     * Create a mock Composer instance.
+     * Create a stub Composer instance.
      *
      * @param array<string, mixed> $extra Extra configuration for root package
      */
-    public static function createComposer(
+    public function createComposer(
         array $extra = [],
-    ): Mockery\MockInterface {
-        $composer = Mockery::mock(Composer::class);
-        $rootPackage = self::createRootPackage($extra);
-        $eventDispatcher = self::createEventDispatcher();
-        $installationManager = self::createInstallationManager();
+    ): Composer {
+        $composer = $this->createStub(Composer::class);
+        $rootPackage = $this->createRootPackage($extra);
+        $eventDispatcher = $this->createEventDispatcher();
 
-        $composer->shouldReceive('getPackage')->andReturn($rootPackage);
-        $composer->shouldReceive('getEventDispatcher')->andReturn($eventDispatcher);
-        $composer->shouldReceive('getInstallationManager')->andReturn($installationManager);
+        $composer->method('getPackage')->willReturn($rootPackage);
+        $composer->method('getEventDispatcher')->willReturn($eventDispatcher);
 
         return $composer;
     }
 
     /**
-     * Create a mock event dispatcher.
+     * Create a stub event dispatcher.
      */
-    public static function createEventDispatcher(): Mockery\MockInterface
+    public function createEventDispatcher(): EventDispatcher
     {
-        $eventDispatcher = Mockery::mock(EventDispatcher::class);
-        $eventDispatcher->shouldReceive('addSubscriber')->andReturn(null);
-
-        return $eventDispatcher;
+        return $this->createStub(EventDispatcher::class);
     }
 
     /**
-     * Create a mock IO interface.
+     * Create a stub IO interface.
      *
      * @param bool $verbose Whether IO should be verbose
      */
-    public static function createIO(
+    public function createIO(
         bool $verbose = false,
-    ): Mockery\MockInterface {
-        $io = Mockery::mock(IOInterface::class);
-        $io->shouldReceive('writeError')->andReturn(null);
-        $io->shouldReceive('write')->andReturn(null);
-        $io->shouldReceive('isVerbose')->andReturn($verbose);
-        $io->shouldReceive('isDebug')->andReturn($verbose);
+    ): IOInterface {
+        $io = $this->createStub(IOInterface::class);
+        $io->method('isVerbose')->willReturn($verbose);
+        $io->method('isDebug')->willReturn($verbose);
 
         return $io;
     }
 
     /**
-     * Create a mock installation manager.
+     * Create a stub installation manager.
      *
      * @param string|null $installPath The install path to return
      */
-    public static function createInstallationManager(
+    public function createInstallationManager(
         ?string $installPath = null,
-    ): Mockery\MockInterface {
-        $installationManager = Mockery::mock(InstallationManager::class);
-        $installationManager->shouldReceive('getInstallPath')->andReturn($installPath);
+    ): InstallationManager {
+        $installationManager = $this->createStub(InstallationManager::class);
+        $installationManager->method('getInstallPath')->willReturn($installPath);
 
         return $installationManager;
     }
 
     /**
-     * Create a mock locker.
+     * Create a stub locker.
      *
      * @param bool                            $isLocked Whether the locker is locked
      * @param array<string, PackageInterface> $packages Array of locked packages
      */
-    public static function createLocker(
+    public function createLocker(
         bool $isLocked = true,
         array $packages = [],
-    ): Mockery\MockInterface {
-        $locker = Mockery::mock(Locker::class);
-        $locker->shouldReceive('isLocked')->andReturn($isLocked);
+    ): Locker {
+        $locker = $this->createStub(Locker::class);
+        $locker->method('isLocked')->willReturn($isLocked);
 
-        $repository = Mockery::mock(LockArrayRepository::class);
-        $repository->shouldReceive('getPackages')->andReturn($packages);
+        $repository = $this->createStub(LockArrayRepository::class);
+        $repository->method('getPackages')->willReturn($packages);
 
-        $locker->shouldReceive('getLockedRepository')->andReturn($repository);
+        $locker->method('getLockedRepository')->willReturn($repository);
 
         return $locker;
     }
 
     /**
-     * Create a mock package.
+     * Create a stub package.
      *
      * @param string $name    Package name
      * @param string $version Package version
      * @param string $type    Package type (library, composer-plugin, etc.)
      */
-    public static function createPackage(
+    public function createPackage(
         string $name = 'test/package',
         string $version = '1.0.0',
         string $type = 'library',
-    ): Mockery\MockInterface {
-        $package = Mockery::mock(PackageInterface::class);
-        $package->shouldReceive('getName')->andReturn($name);
-        $package->shouldReceive('getPrettyVersion')->andReturn($version);
-        $package->shouldReceive('getType')->andReturn($type);
-        $package->shouldReceive('getExtra')->andReturn([]);
+    ): PackageInterface {
+        $package = $this->createStub(PackageInterface::class);
+        $package->method('getName')->willReturn($name);
+        $package->method('getPrettyVersion')->willReturn($version);
+        $package->method('getType')->willReturn($type);
+        $package->method('getExtra')->willReturn([]);
 
         return $package;
     }
 
     /**
-     * Create a mock package event for installation.
+     * Create a package event for installation.
      *
      * @param PackageInterface $package  The package being installed
      * @param Composer         $composer The composer instance
      * @param IOInterface      $io       The IO interface
      */
-    public static function createPackageInstallEvent(
+    public function createPackageInstallEvent(
         PackageInterface $package,
         Composer $composer,
         IOInterface $io,
     ): PackageEvent {
         $operation = new InstallOperation($package);
-        $localRepo = Mockery::mock(RepositoryInterface::class);
+        $localRepo = $this->createStub(RepositoryInterface::class);
 
         return new PackageEvent(PackageEvents::POST_PACKAGE_INSTALL, $composer, $io, false, $localRepo, [], $operation);
     }
 
     /**
-     * Create a mock package event for uninstallation.
+     * Create a package event for uninstallation.
      *
      * @param PackageInterface $package  The package being uninstalled
      * @param Composer         $composer The composer instance
      * @param IOInterface      $io       The IO interface
      */
-    public static function createPackageUninstallEvent(
+    public function createPackageUninstallEvent(
         PackageInterface $package,
         Composer $composer,
         IOInterface $io,
     ): PackageEvent {
         $operation = new UninstallOperation($package);
-        $localRepo = Mockery::mock(RepositoryInterface::class);
+        $localRepo = $this->createStub(RepositoryInterface::class);
 
         return new PackageEvent(PackageEvents::PRE_PACKAGE_UNINSTALL, $composer, $io, false, $localRepo, [], $operation);
     }
 
     /**
-     * Create a mock package event for update.
+     * Create a package event for update.
      *
      * @param PackageInterface $initialPackage The initial package
      * @param PackageInterface $targetPackage  The target package
      * @param Composer         $composer       The composer instance
      * @param IOInterface      $io             The IO interface
      */
-    public static function createPackageUpdateEvent(
+    public function createPackageUpdateEvent(
         PackageInterface $initialPackage,
         PackageInterface $targetPackage,
         Composer $composer,
         IOInterface $io,
     ): PackageEvent {
         $operation = new UpdateOperation($initialPackage, $targetPackage);
-        $localRepo = Mockery::mock(RepositoryInterface::class);
+        $localRepo = $this->createStub(RepositoryInterface::class);
 
         return new PackageEvent(PackageEvents::POST_PACKAGE_UPDATE, $composer, $io, false, $localRepo, [], $operation);
     }
 
     /**
-     * Create a mock root package.
+     * Create a stub root package.
      *
      * @param array<string, mixed> $extra Extra configuration
      */
-    public static function createRootPackage(
+    public function createRootPackage(
         array $extra = [],
-    ): Mockery\MockInterface {
-        $rootPackage = Mockery::mock(RootPackageInterface::class);
-        $rootPackage->shouldReceive('getExtra')->andReturn($extra);
+    ): RootPackageInterface {
+        $rootPackage = $this->createStub(RootPackageInterface::class);
+        $rootPackage->method('getExtra')->willReturn($extra);
 
         return $rootPackage;
     }

@@ -15,7 +15,6 @@ namespace ValksorPlugin\Tests\Unit;
 use Composer\Composer;
 use Composer\Installer\InstallationManager;
 use Composer\IO\IOInterface;
-use Mockery;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
@@ -25,7 +24,7 @@ use Symfony\Flex\Configurator;
 use Symfony\Flex\Lock;
 use Symfony\Flex\Recipe;
 use ValksorPlugin\RecipeHandler;
-use ValksorPlugin\Tests\Mocks\ComposerMockFactory;
+use ValksorPlugin\Tests\Mocks\ComposerMockTrait;
 
 /**
  * Unit tests for RecipeHandler class.
@@ -36,6 +35,8 @@ use ValksorPlugin\Tests\Mocks\ComposerMockFactory;
 #[CoversClass(RecipeHandler::class)]
 class RecipeHandlerTest extends TestCase
 {
+    use ComposerMockTrait;
+
     private Composer $composer;
     private RecipeHandler $handler;
     private IOInterface $io;
@@ -46,7 +47,7 @@ class RecipeHandlerTest extends TestCase
     public function testConstructorLoadsConfiguration(): void
     {
         // Test with valksor configuration
-        $composerWithConfig = ComposerMockFactory::createComposer(
+        $composerWithConfig = $this->createComposer(
             [
                 'valksor' => [
                     'allow' => [
@@ -68,7 +69,7 @@ class RecipeHandlerTest extends TestCase
     public function testConstructorWithEmptyConfiguration(): void
     {
         // Test without valksor configuration
-        $composerWithoutConfig = ComposerMockFactory::createComposer();
+        $composerWithoutConfig = $this->createComposer();
         $handler = new RecipeHandler($composerWithoutConfig, $this->io);
 
         $config = new ReflectionClass($handler)->getProperty('config')->getValue($handler);
@@ -83,18 +84,17 @@ class RecipeHandlerTest extends TestCase
      */
     public function testGetLocalRecipeJsonErrorHandling(): void
     {
-        $composerWithWildcard = ComposerMockFactory::createComposer(
+        $composerWithWildcard = $this->createComposer(
             ['valksor' => ['allow' => '*']],
         );
 
-        $package = ComposerMockFactory::createPackage('test/json-error');
+        $package = $this->createPackage('test/json-error');
         $handler = new RecipeHandler($composerWithWildcard, $this->io);
 
-        $installManager = Mockery::mock(InstallationManager::class);
-        $installManager->shouldReceive('getInstallPath')
-            ->with($package)
-            ->andReturn(__DIR__ . '/../Fixtures/recipes/invalid-recipe');
-        $composerWithWildcard->shouldReceive('getInstallationManager')->andReturn($installManager);
+        $installManager = $this->createStub(InstallationManager::class);
+        $installManager->method('getInstallPath')
+            ->willReturn(__DIR__ . '/../Fixtures/recipes/invalid-recipe');
+        $composerWithWildcard->method('getInstallationManager')->willReturn($installManager);
 
         $this->assertNull(new ReflectionClass($handler)->getMethod('getLocalRecipe')->invoke($handler, $package, 'install'));
     }
@@ -106,32 +106,30 @@ class RecipeHandlerTest extends TestCase
      */
     public function testGetLocalRecipeLogsInvalidManifestWarning(): void
     {
-        $io = Mockery::mock(IOInterface::class);
-        $io->shouldReceive('write')->andReturn(null);
-        $io->shouldReceive('writeError')
-            ->once()
-            ->with(Mockery::on(static fn (string $message): bool => str_contains($message, 'Warning: Invalid manifest.json')));
-        $io->shouldReceive('isVerbose')->andReturnFalse();
-        $io->shouldReceive('isDebug')->andReturnFalse();
+        $io = $this->createMock(IOInterface::class);
+        $io->method('isVerbose')->willReturn(false);
+        $io->method('isDebug')->willReturn(false);
+        $io->expects($this->once())
+            ->method('writeError')
+            ->with($this->callback(static fn (string $message): bool => str_contains($message, 'Warning: Invalid manifest.json')));
 
-        $rootPackage = ComposerMockFactory::createRootPackage();
-        $composer = Mockery::mock(Composer::class);
-        $composer->shouldReceive('getPackage')->andReturn($rootPackage);
+        $rootPackage = $this->createRootPackage();
+        $composer = $this->createStub(Composer::class);
+        $composer->method('getPackage')->willReturn($rootPackage);
         $handler = new RecipeHandler($composer, $io);
 
-        $package = ComposerMockFactory::createPackage('test/json-warning');
+        $package = $this->createPackage('test/json-warning');
 
         $installDir = sys_get_temp_dir() . '/invalid-recipe-' . uniqid('', true);
         $recipeDir = $installDir . '/recipe';
         mkdir($recipeDir, 0o777, true);
         file_put_contents($recipeDir . '/manifest.json', '{ invalid json }');
 
-        $installManager = Mockery::mock(InstallationManager::class);
-        $installManager->shouldReceive('getInstallPath')
-            ->with($package)
-            ->andReturn($installDir);
+        $installManager = $this->createStub(InstallationManager::class);
+        $installManager->method('getInstallPath')
+            ->willReturn($installDir);
 
-        $composer->shouldReceive('getInstallationManager')->andReturn($installManager);
+        $composer->method('getInstallationManager')->willReturn($installManager);
 
         $method = new ReflectionClass($handler)->getMethod('getLocalRecipe');
 
@@ -161,20 +159,20 @@ class RecipeHandlerTest extends TestCase
     public function testGetLocalRecipeReturnsRecipeObject(): void
     {
         // Create package mock
-        $package = ComposerMockFactory::createPackage('test/complete-package', '1.2.3');
+        $package = $this->createPackage('test/complete-package', '1.2.3');
 
         // Create installation manager mock
-        $installManager = Mockery::mock(InstallationManager::class);
-        $installManager->shouldReceive('getInstallPath')
-            ->once()
+        $installManager = $this->createMock(InstallationManager::class);
+        $installManager->expects($this->once())
+            ->method('getInstallPath')
             ->with($package)
-            ->andReturn(__DIR__ . '/../Fixtures/packages/complete-package');
+            ->willReturn(__DIR__ . '/../Fixtures/packages/complete-package');
 
         // Create fresh composer mock with explicit expectations
-        $rootPackage = ComposerMockFactory::createRootPackage();
-        $composer = Mockery::mock(Composer::class);
-        $composer->shouldReceive('getPackage')->andReturn($rootPackage);
-        $composer->shouldReceive('getInstallationManager')->once()->andReturn($installManager);
+        $rootPackage = $this->createRootPackage();
+        $composer = $this->createMock(Composer::class);
+        $composer->method('getPackage')->willReturn($rootPackage);
+        $composer->expects($this->once())->method('getInstallationManager')->willReturn($installManager);
 
         $handler = new RecipeHandler($composer, $this->io);
 
@@ -232,15 +230,14 @@ class RecipeHandlerTest extends TestCase
     public function testGetLocalRecipeWithInvalidManifest(): void
     {
         $method = new ReflectionClass($this->handler)->getMethod('getLocalRecipe');
-        $package = ComposerMockFactory::createPackage('test/invalid-json');
+        $package = $this->createPackage('test/invalid-json');
 
         // Mock installation manager to return invalid recipe path
-        $installManager = Mockery::mock(InstallationManager::class);
-        $installManager->shouldReceive('getInstallPath')
-            ->with($package)
-            ->andReturn(__DIR__ . '/../Fixtures/recipes/invalid-recipe');
+        $installManager = $this->createStub(InstallationManager::class);
+        $installManager->method('getInstallPath')
+            ->willReturn(__DIR__ . '/../Fixtures/recipes/invalid-recipe');
 
-        $this->composer->shouldReceive('getInstallationManager')->andReturn($installManager);
+        $this->composer->method('getInstallationManager')->willReturn($installManager);
 
         $recipe = $method->invoke($this->handler, $package, 'install');
 
@@ -254,22 +251,21 @@ class RecipeHandlerTest extends TestCase
      */
     public function testGetLocalRecipeWithMissingManifestFile(): void
     {
-        $package = ComposerMockFactory::createPackage('test/missing-manifest');
+        $package = $this->createPackage('test/missing-manifest');
 
         $installDir = sys_get_temp_dir() . '/recipe-handler-' . uniqid('', true);
         $recipeDir = $installDir . '/recipe';
         mkdir($recipeDir, 0o777, true);
         file_put_contents($recipeDir . '/dummy.txt', 'dummy');
 
-        $rootPackage = ComposerMockFactory::createRootPackage();
-        $composer = Mockery::mock(Composer::class);
-        $composer->shouldReceive('getPackage')->andReturn($rootPackage);
+        $rootPackage = $this->createRootPackage();
+        $composer = $this->createStub(Composer::class);
+        $composer->method('getPackage')->willReturn($rootPackage);
 
-        $installManager = Mockery::mock(InstallationManager::class);
-        $installManager->shouldReceive('getInstallPath')
-            ->with($package)
-            ->andReturn($installDir);
-        $composer->shouldReceive('getInstallationManager')->andReturn($installManager);
+        $installManager = $this->createStub(InstallationManager::class);
+        $installManager->method('getInstallPath')
+            ->willReturn($installDir);
+        $composer->method('getInstallationManager')->willReturn($installManager);
 
         $handler = new RecipeHandler($composer, $this->io);
         $method = new ReflectionClass($handler)->getMethod('getLocalRecipe');
@@ -296,15 +292,14 @@ class RecipeHandlerTest extends TestCase
     public function testGetLocalRecipeWithNoRecipeDirectory(): void
     {
         $method = new ReflectionClass($this->handler)->getMethod('getLocalRecipe');
-        $package = ComposerMockFactory::createPackage('test/no-recipe');
+        $package = $this->createPackage('test/no-recipe');
 
         // Mock installation manager to return path without recipe
-        $installManager = Mockery::mock(InstallationManager::class);
-        $installManager->shouldReceive('getInstallPath')
-            ->with($package)
-            ->andReturn(sys_get_temp_dir() . '/no-recipe');
+        $installManager = $this->createStub(InstallationManager::class);
+        $installManager->method('getInstallPath')
+            ->willReturn(sys_get_temp_dir() . '/no-recipe');
 
-        $this->composer->shouldReceive('getInstallationManager')->andReturn($installManager);
+        $this->composer->method('getInstallationManager')->willReturn($installManager);
 
         $recipe = $method->invoke($this->handler, $package, 'install');
 
@@ -318,13 +313,12 @@ class RecipeHandlerTest extends TestCase
      */
     public function testGetLocalRecipeWithValidManifestStructure(): void
     {
-        $package = ComposerMockFactory::createPackage('test/valid-recipe');
+        $package = $this->createPackage('test/valid-recipe');
 
-        $installManager = Mockery::mock(InstallationManager::class);
-        $installManager->shouldReceive('getInstallPath')
-            ->with($package)
-            ->andReturn(__DIR__ . '/../Fixtures/recipes/valid-recipe');
-        $this->composer->shouldReceive('getInstallationManager')->andReturn($installManager);
+        $installManager = $this->createStub(InstallationManager::class);
+        $installManager->method('getInstallPath')
+            ->willReturn(__DIR__ . '/../Fixtures/recipes/valid-recipe');
+        $this->composer->method('getInstallationManager')->willReturn($installManager);
 
         // Test that the method processes without throwing exceptions
         $this->assertNull(new ReflectionClass($this->handler)->getMethod('getLocalRecipe')->invoke($this->handler, $package, 'install'));
@@ -534,12 +528,12 @@ class RecipeHandlerTest extends TestCase
     public function testLogRecipeApplicationWithOverride(): void
     {
         // Create fresh IO mock without default expectations
-        $io = Mockery::mock(IOInterface::class);
-        $io->shouldReceive('writeError')
-            ->once()
+        $io = $this->createMock(IOInterface::class);
+        $io->expects($this->once())
+            ->method('writeError')
             ->with('  - Applying local recipe for <info>test/package</info> (override enabled)');
 
-        $composer = ComposerMockFactory::createComposer();
+        $composer = $this->createComposer();
         $handler = new RecipeHandler($composer, $io);
 
         $method = new ReflectionClass($handler)->getMethod('logRecipeApplication');
@@ -554,12 +548,12 @@ class RecipeHandlerTest extends TestCase
     public function testLogRecipeApplicationWithoutOverride(): void
     {
         // Create fresh IO mock without default expectations
-        $io = Mockery::mock(IOInterface::class);
-        $io->shouldReceive('writeError')
-            ->once()
+        $io = $this->createMock(IOInterface::class);
+        $io->expects($this->once())
+            ->method('writeError')
             ->with('  - Applying local recipe for <info>test/package</info>');
 
-        $composer = ComposerMockFactory::createComposer();
+        $composer = $this->createComposer();
         $handler = new RecipeHandler($composer, $io);
 
         $method = new ReflectionClass($handler)->getMethod('logRecipeApplication');
@@ -765,17 +759,17 @@ class RecipeHandlerTest extends TestCase
     public function testProcessPackageCompleteFlowWithValidRecipe(): void
     {
         // Create package mock
-        $package = ComposerMockFactory::createPackage('test/complete-package', '1.2.3');
+        $package = $this->createPackage('test/complete-package', '1.2.3');
 
         // Create installation manager mock
-        $installManager = Mockery::mock(InstallationManager::class);
-        $installManager->shouldReceive('getInstallPath')
-            ->once()
+        $installManager = $this->createMock(InstallationManager::class);
+        $installManager->expects($this->once())
+            ->method('getInstallPath')
             ->with($package)
-            ->andReturn(__DIR__ . '/../Fixtures/packages/complete-package');
+            ->willReturn(__DIR__ . '/../Fixtures/packages/complete-package');
 
         // Create root package with config
-        $rootPackage = ComposerMockFactory::createRootPackage(
+        $rootPackage = $this->createRootPackage(
             [
                 'valksor' => [
                     'allow' => [
@@ -786,30 +780,30 @@ class RecipeHandlerTest extends TestCase
         );
 
         // Create composer mock
-        $composer = Mockery::mock(Composer::class);
-        $composer->shouldReceive('getPackage')->andReturn($rootPackage);
-        $composer->shouldReceive('getInstallationManager')->once()->andReturn($installManager);
+        $composer = $this->createMock(Composer::class);
+        $composer->method('getPackage')->willReturn($rootPackage);
+        $composer->expects($this->once())->method('getInstallationManager')->willReturn($installManager);
 
         // Create IO mock
-        $io = Mockery::mock(IOInterface::class);
-        $io->shouldReceive('writeError')
-            ->once()
+        $io = $this->createMock(IOInterface::class);
+        $io->expects($this->once())
+            ->method('writeError')
             ->with('  - Applying local recipe for <info>test/complete-package</info>');
 
         $handler = new RecipeHandler($composer, $io);
 
         // Mock Lock and Configurator
-        $lock = Mockery::mock(Lock::class);
-        $lock->shouldReceive('set')
-            ->once()
+        $lock = $this->createMock(Lock::class);
+        $lock->expects($this->once())
+            ->method('set')
             ->with('test/complete-package', ['version' => '1.2.3']);
-        $lock->shouldReceive('write')->once();
+        $lock->expects($this->once())->method('write');
 
-        $configurator = Mockery::mock(Configurator::class);
-        $configurator->shouldReceive('install')
-            ->once()
+        $configurator = $this->createMock(Configurator::class);
+        $configurator->expects($this->once())
+            ->method('install')
             ->with(
-                Mockery::type(Recipe::class),
+                $this->isInstanceOf(Recipe::class),
                 $lock,
                 ['force' => false],
             );
@@ -835,7 +829,7 @@ class RecipeHandlerTest extends TestCase
     public function testProcessPackageHandlesJsonException(): void
     {
         // Create handler with wildcard allow configuration
-        $composerWithWildcard = ComposerMockFactory::createComposer(
+        $composerWithWildcard = $this->createComposer(
             [
                 'valksor' => [
                     'allow' => '*',
@@ -844,15 +838,14 @@ class RecipeHandlerTest extends TestCase
         );
         $handler = new RecipeHandler($composerWithWildcard, $this->io);
 
-        $package = ComposerMockFactory::createPackage('test/json-error');
+        $package = $this->createPackage('test/json-error');
 
         // Mock installation manager to return path with invalid JSON
-        $installManager = Mockery::mock(InstallationManager::class);
-        $installManager->shouldReceive('getInstallPath')
-            ->with($package)
-            ->andReturn(__DIR__ . '/../Fixtures/recipes/invalid-recipe');
+        $installManager = $this->createStub(InstallationManager::class);
+        $installManager->method('getInstallPath')
+            ->willReturn(__DIR__ . '/../Fixtures/recipes/invalid-recipe');
 
-        $composerWithWildcard->shouldReceive('getInstallationManager')->andReturn($installManager);
+        $composerWithWildcard->method('getInstallationManager')->willReturn($installManager);
 
         // Should handle JsonException gracefully and return null
         $result = $handler->processPackage($package, 'install');
@@ -870,7 +863,7 @@ class RecipeHandlerTest extends TestCase
     public function testProcessPackageSuccessfulInstallation(): void
     {
         // Create composer with wildcard allow to ensure package is allowed
-        $composerWithWildcard = ComposerMockFactory::createComposer(
+        $composerWithWildcard = $this->createComposer(
             [
                 'valksor' => [
                     'allow' => '*',
@@ -878,15 +871,14 @@ class RecipeHandlerTest extends TestCase
             ],
         );
 
-        $package = ComposerMockFactory::createPackage('test/installation-package', '2.1.0');
+        $package = $this->createPackage('test/installation-package', '2.1.0');
         $handler = new RecipeHandler($composerWithWildcard, $this->io);
 
         // Mock installation manager to return valid recipe path
-        $installManager = Mockery::mock(InstallationManager::class);
-        $installManager->shouldReceive('getInstallPath')
-            ->with($package)
-            ->andReturn(__DIR__ . '/../Fixtures/recipes/valid-recipe');
-        $composerWithWildcard->shouldReceive('getInstallationManager')->andReturn($installManager);
+        $installManager = $this->createStub(InstallationManager::class);
+        $installManager->method('getInstallPath')
+            ->willReturn(__DIR__ . '/../Fixtures/recipes/valid-recipe');
+        $composerWithWildcard->method('getInstallationManager')->willReturn($installManager);
 
         // Execute the method - this should reach the Symfony Flex integration
         $result = $handler->processPackage($package, 'update');
@@ -901,7 +893,7 @@ class RecipeHandlerTest extends TestCase
      */
     public function testProcessPackageWithAllowOverride(): void
     {
-        $composerWithOverride = ComposerMockFactory::createComposer(
+        $composerWithOverride = $this->createComposer(
             [
                 'valksor' => [
                     'allow' => [
@@ -912,15 +904,14 @@ class RecipeHandlerTest extends TestCase
         );
 
         $handler = new RecipeHandler($composerWithOverride, $this->io);
-        $package = ComposerMockFactory::createPackage('test/override-package');
+        $package = $this->createPackage('test/override-package');
 
         // Mock installation manager to return valid recipe path
-        $installManager = Mockery::mock(InstallationManager::class);
-        $installManager->shouldReceive('getInstallPath')
-            ->with($package)
-            ->andReturn(__DIR__ . '/../Fixtures/recipes/valid-recipe');
+        $installManager = $this->createStub(InstallationManager::class);
+        $installManager->method('getInstallPath')
+            ->willReturn(__DIR__ . '/../Fixtures/recipes/valid-recipe');
 
-        $composerWithOverride->shouldReceive('getInstallationManager')->andReturn($installManager);
+        $composerWithOverride->method('getInstallationManager')->willReturn($installManager);
 
         $this->expectNotToPerformAssertions();
         $handler->processPackage($package, 'install');
@@ -932,17 +923,17 @@ class RecipeHandlerTest extends TestCase
     public function testProcessPackageWithAllowOverridePassesForceOption(): void
     {
         // Create package mock
-        $package = ComposerMockFactory::createPackage('test/complete-package', '1.2.3');
+        $package = $this->createPackage('test/complete-package', '1.2.3');
 
         // Create installation manager mock
-        $installManager = Mockery::mock(InstallationManager::class);
-        $installManager->shouldReceive('getInstallPath')
-            ->once()
+        $installManager = $this->createMock(InstallationManager::class);
+        $installManager->expects($this->once())
+            ->method('getInstallPath')
             ->with($package)
-            ->andReturn(__DIR__ . '/../Fixtures/packages/complete-package');
+            ->willReturn(__DIR__ . '/../Fixtures/packages/complete-package');
 
         // Create root package with allow_override enabled
-        $rootPackage = ComposerMockFactory::createRootPackage(
+        $rootPackage = $this->createRootPackage(
             [
                 'valksor' => [
                     'allow' => [
@@ -953,28 +944,28 @@ class RecipeHandlerTest extends TestCase
         );
 
         // Create composer mock
-        $composer = Mockery::mock(Composer::class);
-        $composer->shouldReceive('getPackage')->andReturn($rootPackage);
-        $composer->shouldReceive('getInstallationManager')->once()->andReturn($installManager);
+        $composer = $this->createMock(Composer::class);
+        $composer->method('getPackage')->willReturn($rootPackage);
+        $composer->expects($this->once())->method('getInstallationManager')->willReturn($installManager);
 
         // Create IO mock
-        $io = Mockery::mock(IOInterface::class);
-        $io->shouldReceive('writeError')
-            ->once()
+        $io = $this->createMock(IOInterface::class);
+        $io->expects($this->once())
+            ->method('writeError')
             ->with('  - Applying local recipe for <info>test/complete-package</info> (override enabled)');
 
         $handler = new RecipeHandler($composer, $io);
 
         // Mock Lock and Configurator
-        $lock = Mockery::mock(Lock::class);
-        $lock->shouldReceive('set')->once();
-        $lock->shouldReceive('write')->once();
+        $lock = $this->createMock(Lock::class);
+        $lock->expects($this->once())->method('set');
+        $lock->expects($this->once())->method('write');
 
-        $configurator = Mockery::mock(Configurator::class);
-        $configurator->shouldReceive('install')
-            ->once()
+        $configurator = $this->createMock(Configurator::class);
+        $configurator->expects($this->once())
+            ->method('install')
             ->with(
-                Mockery::type(Recipe::class),
+                $this->isInstanceOf(Recipe::class),
                 $lock,
                 ['force' => true], // Verify force is true
             );
@@ -996,7 +987,7 @@ class RecipeHandlerTest extends TestCase
     public function testProcessPackageWithAllowedPackageAndValidRecipe(): void
     {
         // Create handler with wildcard allow configuration
-        $composerWithWildcard = ComposerMockFactory::createComposer(
+        $composerWithWildcard = $this->createComposer(
             [
                 'valksor' => [
                     'allow' => '*',
@@ -1005,15 +996,14 @@ class RecipeHandlerTest extends TestCase
         );
         $handler = new RecipeHandler($composerWithWildcard, $this->io);
 
-        $package = ComposerMockFactory::createPackage('test/recipe-package');
+        $package = $this->createPackage('test/recipe-package');
 
         // Mock installation manager to return valid recipe path
-        $installManager = Mockery::mock(InstallationManager::class);
-        $installManager->shouldReceive('getInstallPath')
-            ->with($package)
-            ->andReturn(__DIR__ . '/../Fixtures/recipes/valid-recipe');
+        $installManager = $this->createStub(InstallationManager::class);
+        $installManager->method('getInstallPath')
+            ->willReturn(__DIR__ . '/../Fixtures/recipes/valid-recipe');
 
-        $composerWithWildcard->shouldReceive('getInstallationManager')->andReturn($installManager);
+        $composerWithWildcard->method('getInstallationManager')->willReturn($installManager);
 
         $this->expectNotToPerformAssertions();
         $handler->processPackage($package, 'install');
@@ -1021,10 +1011,10 @@ class RecipeHandlerTest extends TestCase
 
     public function testProcessPackageWithDisallowedPackage(): void
     {
-        $package = ComposerMockFactory::createPackage('unknown/package');
+        $package = $this->createPackage('unknown/package');
 
         // Create handler with restrictive configuration
-        $composerWithRestrictiveConfig = ComposerMockFactory::createComposer(
+        $composerWithRestrictiveConfig = $this->createComposer(
             [
                 'valksor' => [
                     'allow' => ['allowed/package' => []],
@@ -1039,15 +1029,14 @@ class RecipeHandlerTest extends TestCase
 
     public function testProcessPackageWithInvalidManifestJson(): void
     {
-        $package = ComposerMockFactory::createPackage('test/invalid-recipe');
+        $package = $this->createPackage('test/invalid-recipe');
 
         // Mock installation manager to return invalid recipe path
-        $installManager = Mockery::mock(InstallationManager::class);
-        $installManager->shouldReceive('getInstallPath')
-            ->with($package)
-            ->andReturn(__DIR__ . '/../Fixtures/recipes/invalid-recipe');
+        $installManager = $this->createStub(InstallationManager::class);
+        $installManager->method('getInstallPath')
+            ->willReturn(__DIR__ . '/../Fixtures/recipes/invalid-recipe');
 
-        $this->composer->shouldReceive('getInstallationManager')->andReturn($installManager);
+        $this->composer->method('getInstallationManager')->willReturn($installManager);
 
         $result = $this->handler->processPackage($package, 'install');
 
@@ -1060,7 +1049,7 @@ class RecipeHandlerTest extends TestCase
     public function testProcessPackageWithNoInstallationPath(): void
     {
         // Create handler with wildcard allow configuration
-        $composerWithWildcard = ComposerMockFactory::createComposer(
+        $composerWithWildcard = $this->createComposer(
             [
                 'valksor' => [
                     'allow' => '*',
@@ -1069,15 +1058,14 @@ class RecipeHandlerTest extends TestCase
         );
         $handler = new RecipeHandler($composerWithWildcard, $this->io);
 
-        $package = ComposerMockFactory::createPackage('test/no-path');
+        $package = $this->createPackage('test/no-path');
 
         // Mock installation manager to return null
-        $installManager = Mockery::mock(InstallationManager::class);
-        $installManager->shouldReceive('getInstallPath')
-            ->with($package)
-            ->andReturn(null);
+        $installManager = $this->createStub(InstallationManager::class);
+        $installManager->method('getInstallPath')
+            ->willReturn(null);
 
-        $composerWithWildcard->shouldReceive('getInstallationManager')->andReturn($installManager);
+        $composerWithWildcard->method('getInstallationManager')->willReturn($installManager);
 
         $result = $handler->processPackage($package, 'install');
         $this->assertNull($result);
@@ -1085,15 +1073,14 @@ class RecipeHandlerTest extends TestCase
 
     public function testProcessPackageWithNoRecipeDirectory(): void
     {
-        $package = ComposerMockFactory::createPackage('test/no-recipe');
+        $package = $this->createPackage('test/no-recipe');
 
         // Mock installation manager to return path without recipe directory
-        $installManager = Mockery::mock(InstallationManager::class);
-        $installManager->shouldReceive('getInstallPath')
-            ->with($package)
-            ->andReturn(sys_get_temp_dir() . '/no-recipe-dir');
+        $installManager = $this->createStub(InstallationManager::class);
+        $installManager->method('getInstallPath')
+            ->willReturn(sys_get_temp_dir() . '/no-recipe-dir');
 
-        $this->composer->shouldReceive('getInstallationManager')->andReturn($installManager);
+        $this->composer->method('getInstallationManager')->willReturn($installManager);
 
         $result = $this->handler->processPackage($package, 'install');
 
@@ -1102,10 +1089,10 @@ class RecipeHandlerTest extends TestCase
 
     public function testProcessPackageWithWildcardAllow(): void
     {
-        $package = ComposerMockFactory::createPackage('any/package');
+        $package = $this->createPackage('any/package');
 
         // Create handler with wildcard configuration
-        $composerWithWildcard = ComposerMockFactory::createComposer(
+        $composerWithWildcard = $this->createComposer(
             [
                 'valksor' => [
                     'allow' => '*',
@@ -1116,12 +1103,11 @@ class RecipeHandlerTest extends TestCase
         $handler = new RecipeHandler($composerWithWildcard, $this->io);
 
         // Mock installation manager to return valid recipe path
-        $installManager = Mockery::mock(InstallationManager::class);
-        $installManager->shouldReceive('getInstallPath')
-            ->with($package)
-            ->andReturn(__DIR__ . '/../Fixtures/recipes/simple-recipe');
+        $installManager = $this->createStub(InstallationManager::class);
+        $installManager->method('getInstallPath')
+            ->willReturn(__DIR__ . '/../Fixtures/recipes/simple-recipe');
 
-        $composerWithWildcard->shouldReceive('getInstallationManager')->andReturn($installManager);
+        $composerWithWildcard->method('getInstallationManager')->willReturn($installManager);
 
         $result = $handler->processPackage($package, 'install');
 
@@ -1135,7 +1121,7 @@ class RecipeHandlerTest extends TestCase
      */
     public function testProcessPackageWithoutAllowOverride(): void
     {
-        $composerWithoutOverride = ComposerMockFactory::createComposer(
+        $composerWithoutOverride = $this->createComposer(
             [
                 'valksor' => [
                     'allow' => [
@@ -1146,15 +1132,14 @@ class RecipeHandlerTest extends TestCase
         );
 
         $handler = new RecipeHandler($composerWithoutOverride, $this->io);
-        $package = ComposerMockFactory::createPackage('test/no-override-package');
+        $package = $this->createPackage('test/no-override-package');
 
         // Mock installation manager to return valid recipe path
-        $installManager = Mockery::mock(InstallationManager::class);
-        $installManager->shouldReceive('getInstallPath')
-            ->with($package)
-            ->andReturn(__DIR__ . '/../Fixtures/recipes/valid-recipe');
+        $installManager = $this->createStub(InstallationManager::class);
+        $installManager->method('getInstallPath')
+            ->willReturn(__DIR__ . '/../Fixtures/recipes/valid-recipe');
 
-        $composerWithoutOverride->shouldReceive('getInstallationManager')->andReturn($installManager);
+        $composerWithoutOverride->method('getInstallationManager')->willReturn($installManager);
 
         $this->expectNotToPerformAssertions();
         $handler->processPackage($package, 'install');
@@ -1172,17 +1157,17 @@ class RecipeHandlerTest extends TestCase
     public function testUninstallPackageCompleteFlowWithValidRecipe(): void
     {
         // Create package mock
-        $package = ComposerMockFactory::createPackage('test/complete-package', '1.2.3');
+        $package = $this->createPackage('test/complete-package', '1.2.3');
 
         // Create installation manager mock
-        $installManager = Mockery::mock(InstallationManager::class);
-        $installManager->shouldReceive('getInstallPath')
-            ->once()
+        $installManager = $this->createMock(InstallationManager::class);
+        $installManager->expects($this->once())
+            ->method('getInstallPath')
             ->with($package)
-            ->andReturn(__DIR__ . '/../Fixtures/packages/complete-package');
+            ->willReturn(__DIR__ . '/../Fixtures/packages/complete-package');
 
         // Create root package with wildcard allow
-        $rootPackage = ComposerMockFactory::createRootPackage(
+        $rootPackage = $this->createRootPackage(
             [
                 'valksor' => [
                     'allow' => '*',
@@ -1191,30 +1176,30 @@ class RecipeHandlerTest extends TestCase
         );
 
         // Create composer mock
-        $composer = Mockery::mock(Composer::class);
-        $composer->shouldReceive('getPackage')->andReturn($rootPackage);
-        $composer->shouldReceive('getInstallationManager')->once()->andReturn($installManager);
+        $composer = $this->createMock(Composer::class);
+        $composer->method('getPackage')->willReturn($rootPackage);
+        $composer->expects($this->once())->method('getInstallationManager')->willReturn($installManager);
 
         // Create IO mock
-        $io = Mockery::mock(IOInterface::class);
-        $io->shouldReceive('writeError')
-            ->once()
+        $io = $this->createMock(IOInterface::class);
+        $io->expects($this->once())
+            ->method('writeError')
             ->with('  - Removing local recipe for <info>test/complete-package</info>');
 
         $handler = new RecipeHandler($composer, $io);
 
         // Mock Lock and Configurator
-        $lock = Mockery::mock(Lock::class);
-        $lock->shouldReceive('remove')
-            ->once()
+        $lock = $this->createMock(Lock::class);
+        $lock->expects($this->once())
+            ->method('remove')
             ->with('test/complete-package');
-        $lock->shouldReceive('write')->once();
+        $lock->expects($this->once())->method('write');
 
-        $configurator = Mockery::mock(Configurator::class);
-        $configurator->shouldReceive('unconfigure')
-            ->once()
+        $configurator = $this->createMock(Configurator::class);
+        $configurator->expects($this->once())
+            ->method('unconfigure')
             ->with(
-                Mockery::type(Recipe::class),
+                $this->isInstanceOf(Recipe::class),
                 $lock,
             );
 
@@ -1244,7 +1229,7 @@ class RecipeHandlerTest extends TestCase
     public function testUninstallPackageSuccessfulRemoval(): void
     {
         // Create composer with wildcard allow to ensure package is allowed
-        $composerWithWildcard = ComposerMockFactory::createComposer(
+        $composerWithWildcard = $this->createComposer(
             [
                 'valksor' => [
                     'allow' => '*',
@@ -1252,15 +1237,14 @@ class RecipeHandlerTest extends TestCase
             ],
         );
 
-        $package = ComposerMockFactory::createPackage('test/uninstall-package', '1.5.0');
+        $package = $this->createPackage('test/uninstall-package', '1.5.0');
         $handler = new RecipeHandler($composerWithWildcard, $this->io);
 
         // Mock installation manager to return valid recipe path
-        $installManager = Mockery::mock(InstallationManager::class);
-        $installManager->shouldReceive('getInstallPath')
-            ->with($package)
-            ->andReturn(__DIR__ . '/../Fixtures/recipes/valid-recipe');
-        $composerWithWildcard->shouldReceive('getInstallationManager')->andReturn($installManager);
+        $installManager = $this->createStub(InstallationManager::class);
+        $installManager->method('getInstallPath')
+            ->willReturn(__DIR__ . '/../Fixtures/recipes/valid-recipe');
+        $composerWithWildcard->method('getInstallationManager')->willReturn($installManager);
 
         // Execute the method - this should reach the Symfony Flex uninstall integration
         $result = $handler->uninstallPackage($package);
@@ -1272,10 +1256,10 @@ class RecipeHandlerTest extends TestCase
 
     public function testUninstallPackageWithDisallowedPackage(): void
     {
-        $package = ComposerMockFactory::createPackage('unknown/package');
+        $package = $this->createPackage('unknown/package');
 
         // Create handler with restrictive configuration
-        $composerWithRestrictiveConfig = ComposerMockFactory::createComposer(
+        $composerWithRestrictiveConfig = $this->createComposer(
             [
                 'valksor' => [
                     'allow' => ['allowed/package' => []],
@@ -1290,15 +1274,14 @@ class RecipeHandlerTest extends TestCase
 
     public function testUninstallPackageWithNoRecipe(): void
     {
-        $package = ComposerMockFactory::createPackage('test/no-recipe');
+        $package = $this->createPackage('test/no-recipe');
 
         // Mock installation manager to return path without recipe directory
-        $installManager = Mockery::mock(InstallationManager::class);
-        $installManager->shouldReceive('getInstallPath')
-            ->with($package)
-            ->andReturn(sys_get_temp_dir() . '/no-recipe-dir');
+        $installManager = $this->createStub(InstallationManager::class);
+        $installManager->method('getInstallPath')
+            ->willReturn(sys_get_temp_dir() . '/no-recipe-dir');
 
-        $this->composer->shouldReceive('getInstallationManager')->andReturn($installManager);
+        $this->composer->method('getInstallationManager')->willReturn($installManager);
 
         $result = $this->handler->uninstallPackage($package);
 
@@ -1308,7 +1291,7 @@ class RecipeHandlerTest extends TestCase
     public function testUninstallPackageWithValidRecipe(): void
     {
         // Create handler with wildcard allow configuration
-        $composerWithWildcard = ComposerMockFactory::createComposer(
+        $composerWithWildcard = $this->createComposer(
             [
                 'valksor' => [
                     'allow' => '*',
@@ -1317,15 +1300,14 @@ class RecipeHandlerTest extends TestCase
         );
         $handler = new RecipeHandler($composerWithWildcard, $this->io);
 
-        $package = ComposerMockFactory::createPackage('test/recipe-package');
+        $package = $this->createPackage('test/recipe-package');
 
         // Mock installation manager to return valid recipe path
-        $installManager = Mockery::mock(InstallationManager::class);
-        $installManager->shouldReceive('getInstallPath')
-            ->with($package)
-            ->andReturn(__DIR__ . '/../Fixtures/recipes/valid-recipe');
+        $installManager = $this->createStub(InstallationManager::class);
+        $installManager->method('getInstallPath')
+            ->willReturn(__DIR__ . '/../Fixtures/recipes/valid-recipe');
 
-        $composerWithWildcard->shouldReceive('getInstallationManager')->andReturn($installManager);
+        $composerWithWildcard->method('getInstallationManager')->willReturn($installManager);
 
         $this->expectNotToPerformAssertions();
         $handler->uninstallPackage($package);
@@ -1347,14 +1329,8 @@ class RecipeHandlerTest extends TestCase
 
     protected function setUp(): void
     {
-        $this->composer = ComposerMockFactory::createComposer();
-        $this->io = ComposerMockFactory::createIO();
+        $this->composer = $this->createComposer();
+        $this->io = $this->createIO();
         $this->handler = new RecipeHandler($this->composer, $this->io);
-    }
-
-    protected function tearDown(): void
-    {
-        Mockery::close();
-        parent::tearDown();
     }
 }

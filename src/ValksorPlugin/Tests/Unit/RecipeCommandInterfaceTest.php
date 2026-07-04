@@ -12,7 +12,6 @@
 
 namespace ValksorPlugin\Tests\Unit;
 
-use Mockery;
 use PHPUnit\Framework\TestCase;
 use ReflectionClass;
 use ValksorPlugin\Command\ValksorRecipesInstallCommand;
@@ -59,11 +58,5 @@ class RecipeCommandInterfaceTest extends TestCase
         $this->assertTrue(method_exists($command, 'getNotFoundMessage'));
         $this->assertTrue(method_exists($command, 'getSuccessMessage'));
         $this->assertTrue(method_exists($command, 'processPackage'));
-    }
-
-    protected function tearDown(): void
-    {
-        Mockery::close();
-        parent::tearDown();
     }
 }

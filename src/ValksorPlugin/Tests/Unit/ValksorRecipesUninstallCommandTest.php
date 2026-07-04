@@ -15,7 +15,6 @@ namespace ValksorPlugin\Tests\Unit;
 use Composer\Config;
 use Composer\Package\Locker;
 use Composer\Repository\LockArrayRepository;
-use Mockery;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 use ReflectionClass;
@@ -26,7 +25,7 @@ use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
 use ValksorPlugin\Command\ValksorRecipesUninstallCommand;
 use ValksorPlugin\RecipeHandler;
-use ValksorPlugin\Tests\Mocks\ComposerMockFactory;
+use ValksorPlugin\Tests\Mocks\ComposerMockTrait;
 
 /**
  * Unit tests for ValksorRecipesUninstallCommand class.
@@ -37,6 +36,8 @@ use ValksorPlugin\Tests\Mocks\ComposerMockFactory;
 #[CoversClass(RecipeHandler::class)]
 class ValksorRecipesUninstallCommandTest extends TestCase
 {
+    use ComposerMockTrait;
+
     private ValksorRecipesUninstallCommand $command;
     private InputInterface $input;
     private OutputInterface $output;
@@ -87,22 +88,22 @@ class ValksorRecipesUninstallCommandTest extends TestCase
      */
     public function testExecuteWithNoLockFile(): void
     {
-        $composer = ComposerMockFactory::createComposer();
-        $locker = ComposerMockFactory::createLocker(false);
-        $composer->shouldReceive('getLocker')->andReturn($locker);
-        $composer->shouldReceive('getConfig')->andReturn(Mockery::mock(Config::class));
+        $composer = $this->createComposer();
+        $locker = $this->createLocker(false);
+        $composer->method('getLocker')->willReturn($locker);
+        $composer->method('getConfig')->willReturn($this->createStub(Config::class));
 
-        $application = Mockery::mock(Application::class);
-        $application->shouldReceive('getHelperSet')->andReturn(Mockery::mock(HelperSet::class));
+        $application = $this->createStub(Application::class);
+        $application->method('getHelperSet')->willReturn($this->createStub(HelperSet::class));
         $this->command->setApplication($application);
         $this->command->setComposer($composer);
 
-        $this->input = Mockery::mock(InputInterface::class);
-        $this->output = Mockery::mock(OutputInterface::class);
+        $this->input = $this->createStub(InputInterface::class);
+        $this->output = $this->createStub(OutputInterface::class);
 
-        $this->input->shouldReceive('getArgument')->with('package')->andReturn('test/package');
+        $this->input->method('getArgument')->willReturn('test/package');
 
-        $io = ComposerMockFactory::createIO();
+        $io = $this->createIO();
         $this->command->setIO($io);
 
         $result = new ReflectionClass($this->command)->getMethod('execute')->invoke($this->command, $this->input, $this->output);
@@ -116,34 +117,34 @@ class ValksorRecipesUninstallCommandTest extends TestCase
      */
     public function testExecuteWithPackageNoRecipe(): void
     {
-        $composer = ComposerMockFactory::createComposer();
-        $package = ComposerMockFactory::createPackage('test/no-recipe-package');
+        $composer = $this->createComposer();
+        $package = $this->createPackage('test/no-recipe-package');
 
         // Create locker mock directly to control repository type
-        $locker = Mockery::mock(Locker::class);
-        $locker->shouldReceive('isLocked')->andReturn(true);
-        $repository = Mockery::mock(LockArrayRepository::class);
-        $repository->shouldReceive('getPackages')->andReturn([$package]);
-        $locker->shouldReceive('getLockedRepository')->andReturn($repository);
-        $composer->shouldReceive('getLocker')->andReturn($locker);
-        $composer->shouldReceive('getConfig')->andReturn(Mockery::mock(Config::class));
+        $locker = $this->createStub(Locker::class);
+        $locker->method('isLocked')->willReturn(true);
+        $repository = $this->createStub(LockArrayRepository::class);
+        $repository->method('getPackages')->willReturn([$package]);
+        $locker->method('getLockedRepository')->willReturn($repository);
+        $composer->method('getLocker')->willReturn($locker);
+        $composer->method('getConfig')->willReturn($this->createStub(Config::class));
 
-        $application = Mockery::mock(Application::class);
-        $application->shouldReceive('getHelperSet')->andReturn(Mockery::mock(HelperSet::class));
+        $application = $this->createStub(Application::class);
+        $application->method('getHelperSet')->willReturn($this->createStub(HelperSet::class));
         $this->command->setApplication($application);
         $this->command->setComposer($composer);
 
-        $this->input = Mockery::mock(InputInterface::class);
-        $this->output = Mockery::mock(OutputInterface::class);
+        $this->input = $this->createStub(InputInterface::class);
+        $this->output = $this->createStub(OutputInterface::class);
 
-        $this->input->shouldReceive('getArgument')->with('package')->andReturn('test/no-recipe-package');
+        $this->input->method('getArgument')->willReturn('test/no-recipe-package');
 
-        $io = ComposerMockFactory::createIO();
+        $io = $this->createIO();
         $this->command->setIO($io);
 
         // Mock installation manager to return path without recipe
-        $installManager = ComposerMockFactory::createInstallationManager(sys_get_temp_dir() . '/no-recipe');
-        $composer->shouldReceive('getInstallationManager')->andReturn($installManager);
+        $installManager = $this->createInstallationManager(sys_get_temp_dir() . '/no-recipe');
+        $composer->method('getInstallationManager')->willReturn($installManager);
 
         $result = new ReflectionClass($this->command)->getMethod('execute')->invoke($this->command, $this->input, $this->output);
         $this->assertSame(0, $result);
@@ -156,29 +157,29 @@ class ValksorRecipesUninstallCommandTest extends TestCase
      */
     public function testExecuteWithPackageNotFound(): void
     {
-        $composer = ComposerMockFactory::createComposer();
-        $package = ComposerMockFactory::createPackage('other/package');
+        $composer = $this->createComposer();
+        $package = $this->createPackage('other/package');
 
         // Create locker mock directly to control repository type
-        $locker = Mockery::mock(Locker::class);
-        $locker->shouldReceive('isLocked')->andReturn(true);
-        $repository = Mockery::mock(LockArrayRepository::class);
-        $repository->shouldReceive('getPackages')->andReturn([$package]);
-        $locker->shouldReceive('getLockedRepository')->andReturn($repository);
-        $composer->shouldReceive('getLocker')->andReturn($locker);
-        $composer->shouldReceive('getConfig')->andReturn(Mockery::mock(Config::class));
+        $locker = $this->createStub(Locker::class);
+        $locker->method('isLocked')->willReturn(true);
+        $repository = $this->createStub(LockArrayRepository::class);
+        $repository->method('getPackages')->willReturn([$package]);
+        $locker->method('getLockedRepository')->willReturn($repository);
+        $composer->method('getLocker')->willReturn($locker);
+        $composer->method('getConfig')->willReturn($this->createStub(Config::class));
 
-        $application = Mockery::mock(Application::class);
-        $application->shouldReceive('getHelperSet')->andReturn(Mockery::mock(HelperSet::class));
+        $application = $this->createStub(Application::class);
+        $application->method('getHelperSet')->willReturn($this->createStub(HelperSet::class));
         $this->command->setApplication($application);
         $this->command->setComposer($composer);
 
-        $this->input = Mockery::mock(InputInterface::class);
-        $this->output = Mockery::mock(OutputInterface::class);
+        $this->input = $this->createStub(InputInterface::class);
+        $this->output = $this->createStub(OutputInterface::class);
 
-        $this->input->shouldReceive('getArgument')->with('package')->andReturn('nonexistent/package');
+        $this->input->method('getArgument')->willReturn('nonexistent/package');
 
-        $io = ComposerMockFactory::createIO();
+        $io = $this->createIO();
         $this->command->setIO($io);
 
         $result = new ReflectionClass($this->command)->getMethod('execute')->invoke($this->command, $this->input, $this->output);
@@ -192,40 +193,40 @@ class ValksorRecipesUninstallCommandTest extends TestCase
      */
     public function testExecuteWithPackageSuccess(): void
     {
-        $composer = ComposerMockFactory::createComposer(
+        $composer = $this->createComposer(
             [
                 'valksor' => [
                     'allow' => '*',
                 ],
             ],
         );
-        $package = ComposerMockFactory::createPackage('test/success-package');
+        $package = $this->createPackage('test/success-package');
 
         // Create locker mock directly to control repository type
-        $locker = Mockery::mock(Locker::class);
-        $locker->shouldReceive('isLocked')->andReturn(true);
-        $repository = Mockery::mock(LockArrayRepository::class);
-        $repository->shouldReceive('getPackages')->andReturn([$package]);
-        $locker->shouldReceive('getLockedRepository')->andReturn($repository);
-        $composer->shouldReceive('getLocker')->andReturn($locker);
-        $composer->shouldReceive('getConfig')->andReturn(Mockery::mock(Config::class));
+        $locker = $this->createStub(Locker::class);
+        $locker->method('isLocked')->willReturn(true);
+        $repository = $this->createStub(LockArrayRepository::class);
+        $repository->method('getPackages')->willReturn([$package]);
+        $locker->method('getLockedRepository')->willReturn($repository);
+        $composer->method('getLocker')->willReturn($locker);
+        $composer->method('getConfig')->willReturn($this->createStub(Config::class));
 
-        $application = Mockery::mock(Application::class);
-        $application->shouldReceive('getHelperSet')->andReturn(Mockery::mock(HelperSet::class));
+        $application = $this->createStub(Application::class);
+        $application->method('getHelperSet')->willReturn($this->createStub(HelperSet::class));
         $this->command->setApplication($application);
         $this->command->setComposer($composer);
 
-        $this->input = Mockery::mock(InputInterface::class);
-        $this->output = Mockery::mock(OutputInterface::class);
+        $this->input = $this->createStub(InputInterface::class);
+        $this->output = $this->createStub(OutputInterface::class);
 
-        $this->input->shouldReceive('getArgument')->with('package')->andReturn('test/success-package');
+        $this->input->method('getArgument')->willReturn('test/success-package');
 
-        $io = ComposerMockFactory::createIO();
+        $io = $this->createIO();
         $this->command->setIO($io);
 
         // Mock installation manager to return valid recipe path
-        $installManager = ComposerMockFactory::createInstallationManager(__DIR__ . '/../Fixtures/recipes/valid-recipe');
-        $composer->shouldReceive('getInstallationManager')->andReturn($installManager);
+        $installManager = $this->createInstallationManager(__DIR__ . '/../Fixtures/recipes/valid-recipe');
+        $composer->method('getInstallationManager')->willReturn($installManager);
 
         $result = new ReflectionClass($this->command)->getMethod('execute')->invoke($this->command, $this->input, $this->output);
 
@@ -240,19 +241,19 @@ class ValksorRecipesUninstallCommandTest extends TestCase
      */
     public function testFindPackageByName(): void
     {
-        $packageOne = ComposerMockFactory::createPackage('test/package-one');
-        $packageTwo = ComposerMockFactory::createPackage('test/package-two');
+        $packageOne = $this->createPackage('test/package-one');
+        $packageTwo = $this->createPackage('test/package-two');
 
         $command = new ValksorRecipesUninstallCommand();
-        $composer = ComposerMockFactory::createComposer();
+        $composer = $this->createComposer();
 
-        $locker = Mockery::mock(Locker::class);
-        $locker->shouldReceive('isLocked')->andReturn(true);
-        $repository = Mockery::mock(LockArrayRepository::class);
-        $repository->shouldReceive('getPackages')->andReturn([$packageOne, $packageTwo]);
-        $locker->shouldReceive('getLockedRepository')->andReturn($repository);
-        $composer->shouldReceive('getLocker')->andReturn($locker);
-        $composer->shouldReceive('getConfig')->andReturn(Mockery::mock(Config::class));
+        $locker = $this->createStub(Locker::class);
+        $locker->method('isLocked')->willReturn(true);
+        $repository = $this->createStub(LockArrayRepository::class);
+        $repository->method('getPackages')->willReturn([$packageOne, $packageTwo]);
+        $locker->method('getLockedRepository')->willReturn($repository);
+        $composer->method('getLocker')->willReturn($locker);
+        $composer->method('getConfig')->willReturn($this->createStub(Config::class));
 
         $command->setComposer($composer);
 
@@ -308,11 +309,5 @@ class ValksorRecipesUninstallCommandTest extends TestCase
     protected function setUp(): void
     {
         $this->command = new ValksorRecipesUninstallCommand();
-    }
-
-    protected function tearDown(): void
-    {
-        Mockery::close();
-        parent::tearDown();
     }
 }
